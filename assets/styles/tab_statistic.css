@@ -1,0 +1,21 @@
+#statistics_holder iframe {
+	width: 750px;
+	height:440px;
+	border: none;
+}
+
+#statistics_holder #start_profiling {
+	margin: 5px;
+	padding: 5px;
+	width: 99%;
+}
+
+.header_override {
+	width: 585px;	
+}
+
+#statistics_holder #clear_profiling_data {
+	margin: 5px;
+	padding: 5px;	
+}
+

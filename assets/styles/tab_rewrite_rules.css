@@ -1,0 +1,49 @@
+/**
+ * Rewrite Rules
+ */
+#rewrite_rules_holder {
+	display: none;
+}
+
+
+#rewrite_rules_template {
+	display: none;
+}
+
+#rewrite_rules_list {
+	background: none;
+	bottom: 10px;
+    overflow: auto;
+    position: absolute;
+    top: 40px;
+    width: 100%;
+}
+
+#rewrite_rules_list .rewrite_rule_boxes {
+	margin: 2px;
+  border-radius: 8px;
+  box-shadow: 0 1px 5px rgba(0, 0, 0, 0.05) inset;
+	background: none repeat scroll 0 0 #96c9f3;
+  border-radius: 8px;
+  margin: 2px;
+  padding: 5px 5px 1px;
+  transition: all 0.5s ease;
+}
+
+#rewrite_rules_list .txt_labels span {
+	color: black;
+}
+
+#rewrite_rules_list .rewrite_rule_boxes .head {
+
+}
+
+#rewrite_rules_list .rewrite_rule_boxes .head a {
+	margin: 1px;
+    padding: 2px;
+}
+
+#rewrite_rules_list .header_override_field {
+    width: 570px;
+    height: 60px;
+}

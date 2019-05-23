@@ -1,0 +1,292 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+
+<link rel="stylesheet" href="../assets/styles/global.css" type="text/css">
+<link rel="stylesheet" href="../assets/styles/tab_rewrite_rules.css" type="text/css">
+<link rel="stylesheet" href="../assets/styles/tab_proxy_rules.css" type="text/css">
+<link rel="stylesheet" href="../assets/styles/tab_scripts.css" type="text/css">
+<link rel="stylesheet" href="../assets/styles/tab_statistic.css" type="text/css">
+
+<script src="../assets/lib/jquery-1.7.2.min.js" type="text/javascript"></script>
+<script src="../assets/lib/VCNavTabs.js" type="text/javascript"></script>
+<script src="../assets/scripts/popup.js" type="text/javascript"></script>
+<script src="../assets/scripts/tab_rewrite_rules.js" type="text/javascript"></script>
+<script src="../assets/scripts/tab_statistic.js" type="text/javascript"></script>
+<script src="../assets/scripts/tab_scripts.js" type="text/javascript"></script>
+<script src="../assets/scripts/tab_proxy_settings.js" type="text/javascript"></script>
+
+</head>
+
+<body>
+	<div id="wrapper">
+		<div id="top">
+			<ul id="VCMainNavTabs" class="VCNavTabs">
+				<li class="active"><a href='#' >Profiling</a></li>
+				<li><a href='#' >Rewrite Rules</a></li>
+				<li><a href='#'>Proxy Rules</a></li>	
+        <li><a href='#'>Scripts Injection</a></li>			
+        <li><a href='#'>About</a></li>						
+			</ul>
+		</div>
+		
+		<div id="middle">
+			<div class='TabBoxes'>
+
+				<!-- ######### Statistics Tab ########## -->
+				<div id="statistics_holder">
+					<iframe id="chart_iframe" src="http://chrome-dev-helper.toni-develops.com"></iframe>
+					<button id="start_profiling">Start Profiling</button>
+					<!-- 
+					<button id="clear_profiling_data">Clear</button>
+					 -->
+				</div>
+				
+				<!-- ######### Rewrite Rules Tab ########## -->
+				<div id="rewrite_rules_holder">
+					<div class="pannel">
+						<a href='#' class="btn add">+</a>
+						<a href='#' class='tooltip'>
+                           	<img src="../assets/icons/help.gif">
+                            <span>
+                                <img class="callout" src="../assets/icons/help.gif"/>
+                                <strong>Setting up asset rewrite rules</strong><br/>
+								Creating asset rewrite rule will allow chrome to dynamically replace <b>matching url</b> with <b>Replacement URL</b><br>
+								For Example if you want to test and customize Java Script, you could set up rewrite rule to loast http://mysite.com/script_B.js instead of  http://mysite.com/script_A.js<br>
+								You could also override and add request and response headers.
+                            </span>
+                        </a>
+					</div>
+
+					<div id='rewrite_rules_list' class="boxes">
+					</div>
+
+					<!--  ### Hidden template for the rewrite rules pannel ### -->
+					<div id='rewrite_rules_template' class="boxes" data-id=''>
+						<div class="head">						
+							<div class='pannel'>
+								<a href='#' class="btn">x</a>
+								<input type='checkbox' id='chkbx_regexp_a' class='active'>active
+								<input type='checkbox' id='chkbx_regexp_g' class='global'>global
+								<input type='checkbox' id='chkbx_regexp_i' class='caseinsensitive'>case insensitive
+							</div>
+						</div>
+						<div class="title txt_labels">Match URL 
+							<a href='#' class='tooltip'>
+                            	<img src="../assets/icons/help.gif">
+	                            <span>
+	                                <img class="callout" src="../assets/icons/help.gif"/>
+	                                <strong>Matching url is regular expression</strong><br/>
+	                                Leaving it empty, will match everything
+	                                <br><br>
+	                                <strong>Example:</strong><br/>
+	                                http://cnn.com/.* - this will match everything after the third slash (.*) http://cnn.com/news, or http://cnn.com/live
+	                            </span>
+	                        </a>
+						</div>
+						<div contenteditable="true" class="txt_fields url" title='Regular expression to match the url. For example this regex will match everything:  ^.*$'></div>
+												
+
+						<div class="title txt_labels">Replacement URL
+							<a href='#' class='tooltip'>
+                            	<img src="../assets/icons/help.gif">
+	                            <span>
+	                                <img class="callout" src="../assets/icons/help.gif"/>
+	                                <strong>Replacement URL that points to the new asset that will be loaded.</strong><br/>
+	                                <br><br>
+	                                <strong>Example:</strong><br/>
+	                                http://mysite.com/script.js
+	                            </span>
+	                        </a>						
+						</div>
+						<div contenteditable="true" class="txt_fields replacement"></div>
+
+						<br>
+						<div class="title txt_labels">Request Headers
+							<a href='#' class='tooltip'>
+                            	<img src="../assets/icons/help.gif">
+	                            <span>
+	                                <img class="callout" src="../assets/icons/help.gif"/>
+	                                <strong>Request Headers override</strong><br/>
+	                                Put each header override on new line. Header name and value are separated by colon.
+	                                <br>
+	                                <strong>Example:</strong><br/>
+	                                Host:mywebsite.com<br> 
+	                                user-agent:Apple-iPhone2C1/801.306
+	                            </span>
+	                        </a>						
+						</div>
+						<textarea class="txt_fields header_override_field request_header_override" title="Line separated list of header override parameters, name : value. Example: Host:cnn.com"></textarea>
+						
+						<br>
+						<div class="title txt_labels">Response Headers
+							<a href='#' class='tooltip'>
+                            	<img src="../assets/icons/help.gif">
+	                            <span>
+	                                <img class="callout" src="../assets/icons/help.gif"/>
+	                                <strong>Response Headers override</strong><br/>
+	                                Put each header override on new line. Header name and value are separated by colon.
+	                                <br>
+									Response headers will be overriten, but it won't be shown in Crome console.
+	                                <br><br>
+									<strong>Example below will allow cross domain script loading.</strong><br/>
+	                                Access-Control-Allow-Origin:* 
+	                            </span>
+	                        </a>						
+						</div>
+						<br>						
+						<textarea class="txt_fields header_override_field response_header_override" title="Line separated list of header override parameters, name : value. Example: Host:cnn.com"></textarea>
+						
+					</div>
+				</div>
+
+				<!-- ######### Proxy Tab ########## -->
+				<div id="proxy_settings_holder">	
+				
+					<div class="pannel">
+						<a href='#' class="btn add">+</a>
+						<a href='#' class='tooltip'>
+                           	<img src="../assets/icons/help.gif">
+                            <span>
+                                <img class="callout" src="../assets/icons/help.gif"/>
+                                <strong>Each following proxy Rule overrides the previous one</strong><br/>
+								This means that if you have two proxy rules that match the same url pattern (or emty url pattern which matches all),
+								each following proxy rule will override the previous one.
+                            </span>
+                        </a>						
+					</div>
+
+					<div id='proxy_rules_list' class="boxes">
+					</div>
+
+					<!--  ### Hidden template for the proxy rules pannel ### -->
+					<div id='proxy_rules_template' class="boxes" data-id=''>
+						<div class="head">						
+							<div class='pannel'>
+								<a href='#' class="btn">x</a>
+								<input type='checkbox' id='chkbx_regexp_a' class='active'>active
+								<input type='checkbox' id='chkbx_regexp_g' class='global'>global
+								<input type='checkbox' id='chkbx_regexp_i' class='caseinsensitive'>case insensitive
+							</div>
+						</div>
+						<div class="title txt_labels">Match URL
+							<a href='#' class='tooltip'>
+                            	<img src="../assets/icons/help.gif">
+	                            <span>
+	                                <img class="callout" src="../assets/icons/help.gif"/>
+	                                <strong>Regular Expression</strong><br/>
+	                                Leaving it empty, will match everything
+	                                <br>
+	                                <strong>Example:</strong><br/>
+	                                http://cnn.com/.* - this will match everything after the third slash (.*) http://cnn.com/news, or http://cnn.com/live
+	                            </span>
+	                        </a>						
+						</div>
+						<div contenteditable="true" class="txt_fields url" title='Regular expression to match the url. For example this regex will match everything:  ^.*$'></div>
+
+						<div class="title txt_labels">Proxy type</div>
+
+						<select class="txt_fields proxy_type">
+							<optgroup label="Don't Manage Proxy">
+	                            <option>Direct</option>							
+	                            <option>System Proxy</option>
+							</optgroup>
+							<optgroup label="Proxy Pac">	                            						
+	                            <option>File location</option>
+	                            <option>HTTP location</option>
+	                            <option>HTTPS location</option>
+							</optgroup>
+							
+							<optgroup label="HTTP Prpoxy">	                            
+	                            <option>http location</option>
+	                        </optgroup>
+
+							<optgroup label="HTTPS Prpoxy">	                            
+	                            <option>https location</option>
+	                        </optgroup>
+	                        
+                        </select>
+						<br>
+						
+						<div class="proxy_location_and_port_wrapper">
+							<div class="title txt_labels">Proxy Location:</div>
+	                        <div contenteditable="true" class="txt_fields proxy_location" title=''></div>
+
+							<div class="proxy_port_wrapper">							
+								<div class="title txt_labels">Port:</div>
+		                        <div contenteditable="true" class="txt_fields proxy_port" title=''></div>
+		                    </div>
+						</div>												
+					</div>								
+				</div>
+				
+				
+				
+				
+				
+				
+				
+				
+				
+				<!-- ######### Script Tab ########## -->
+				<div id="scripts_holder">	
+				
+					<div class="pannel">
+						<a href='#' title="Add script" class="btn add">+</a>
+						<a href='#' class='tooltip'>
+                           	<img src="../assets/icons/help.gif">
+                            <span>
+                                <img class="callout" src="../assets/icons/help.gif"/>
+                                <strong>Injecting CSS or Java Script code for testing purposes.</strong><br/>
+                            </span>
+                        </a>						
+					</div>
+
+					<div id='scripts_list' class="boxes">
+					</div>
+
+					<!--  ### Hidden template for the scripts pannel ### -->
+					<div id='scripts_template' class="boxes" data-id=''>
+						<div class="head">						
+							<div class='pannel'>
+								<a href='#' class="btn">x</a>
+								<input type='checkbox' id='chkbx_regexp_a' class='active'>active
+							</div>
+						</div>
+						<div class="title txt_labels">Script Location:
+							<a href='#' class='tooltip'>
+                            	<img src="../assets/icons/help.gif">
+	                            <span>
+	                                <img class="callout" src="../assets/icons/help.gif"/>
+	                                <strong>Injecting CSS or Java Scripts</strong><br/>
+	                                Provide location of CSS or Java Script to be injected in the page.
+	                                <br><br>
+	                                <strong>Example:</strong><br/>
+	                                http://mysite.com/script.js
+	                            </span>
+	                        </a>						
+						</div>
+						<div contenteditable="true" class="txt_fields script_location" title='script location'></div>
+
+						<div class="title txt_labels">Attach to the:</div>
+
+						<select class="txt_fields execute_type">
+	                            <option>HEAD of the document</option>							
+	                            <option>BODY of the document</option>	                        
+                        </select>
+						<br>																							
+					</div>												
+        		</div>	
+		
+				<!-- ######### Script Tab ########## -->
+				<div id="about_holder">	
+					<p>Dev Helper <b>Version 2.2</b></p>
+					<p>Developed by: Toni Y Nichev</p>
+					<p><a href="#" id="how-to-link"><b>How to use Dev Helper</b></a></p>
+				</div>					        
+
+			</div>		
+		</div>
+		
+	</div>
+</body>
+</html>
