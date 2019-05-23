@@ -306,10 +306,6 @@ function useProxy(proxy_type, proxy_location, proxy_port) {
 
 	}
 
-  //config['pacScript']['data'] = 'function FindProxyForURL(url, host) { return "PROXY 127.0.0.1:8989";}';
-  //config['pacScript']['data']
-  //config['pacScript']['url'] = "https://www.toni-develops.com/external-files/examples/test.pac";
-
     chrome.proxy.settings.set({
     	value: config,
     	scope: 'regular'}, function() {});
