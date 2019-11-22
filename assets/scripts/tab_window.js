@@ -13,6 +13,8 @@ function test() {
               console.log(">>>", tab.width);
             }
           }
+
+      });
         */
 
         chrome.windows.getLastFocused(
@@ -20,27 +22,37 @@ function test() {
             function(currentWindow) {
                 chrome.windows.update(currentWindow.id, { width: 100 });
             }
-        );          
-
-      });
+        );         
   }); 
 }
 
 
-function updateWindowWidth() {
+function updateWindowWidth(newWidth) {
   chrome.windows.getLastFocused(
       {populate: false}, 
       function(currentWindow) {
-          chrome.windows.update(currentWindow.id, { width: 100 });
+          chrome.windows.update(currentWindow.id, { width: newWidth });
       }
   );    
 }
 
 
 $(document).ready(function(){
-	$("#windowTest").click(function(obj) {
-		test();
+	$("#updateWindowWidth360").click(function(obj) {
+		updateWindowWidth(360);
 	}); 
+
+	$("#updateWindowWidth760").click(function(obj) {
+		updateWindowWidth(760);
+	}); 
+
+	$("#updateWindowWidth1020").click(function(obj) {
+		updateWindowWidth(1020);
+	}); 
+
+	$("#updateWindowWidth1440").click(function(obj) {
+		updateWindowWidth(1440);
+	});       
 });
 
 
