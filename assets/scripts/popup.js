@@ -21,9 +21,12 @@ document.addEventListener('DOMContentLoaded', function () {
 					  		$("#proxy_settings_holder").css('display', 'block');					  		
 					  		break;
 					  	case 3:
-							$("#scripts_holder").css('display', 'block');
+							  $("#scripts_holder").css('display', 'block');
 							break;
-                		case 4:
+              case 4:
+                $("#window_holder").css('display', 'block');                
+              break;
+              case 5:
 					  		$("#about_holder").css('display', 'block');                
 						break;
 					  }
