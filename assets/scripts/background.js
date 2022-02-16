@@ -186,7 +186,7 @@ chrome.webRequest.onHeadersReceived.addListener(function(details) {
           return {responseHeaders: details.responseHeaders};
 },
 {urls: ["<all_urls>"]},
-["blocking", "responseHeaders"]);
+["blocking", "extraHeaders", "responseHeaders"]);
 
 
 chrome.webRequest.onResponseStarted.addListener(function(details) {
