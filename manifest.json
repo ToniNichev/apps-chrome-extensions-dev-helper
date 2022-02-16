@@ -29,7 +29,6 @@
    "default_icon": "settings.png",
    "default_popup": "markups/popup.html" 
  },  
- "optional_permissions":["activeTab"],
 
   "manifest_version": 2  
 }
