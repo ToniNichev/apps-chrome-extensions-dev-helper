@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Dev Helper</title>
+	<link rel="stylesheet" href="./popup.css">
+</head>
+<body>
+	<div class="app-shell">
+		<nav class="tab-strip" id="tabStrip">
+			<button type="button" class="tab-button is-active" data-tab="profiling">Profiling</button>
+			<button type="button" class="tab-button" data-tab="rewrite">Rewrite Rules</button>
+			<button type="button" class="tab-button" data-tab="proxy">Proxy Rules</button>
+			<button type="button" class="tab-button" data-tab="scripts">Script Rules</button>
+		</nav>
+
+		<main class="panel-stack">
+			<section class="panel is-active" data-panel="profiling" id="profilingPanel">
+				<div class="section-head">
+					<div>
+						<h2>Network Profiling</h2>
+						<p>Capture request timings from the service worker and keep a running snapshot inside the popup.</p>
+					</div>
+					<div class="button-row">
+						<button type="button" class="secondary-button" id="clearProfileButton">Clear</button>
+						<button type="button" class="primary-button" id="toggleProfilingButton">Start Profiling</button>
+					</div>
+				</div>
+				<div class="stats-grid" id="profileStats"></div>
+				<div class="debug-grid">
+					<div class="debug-card">
+						<h3>Runtime Health</h3>
+						<div id="runtimeHealth"></div>
+					</div>
+					<div class="debug-card">
+						<h3>Validation</h3>
+						<div id="validationSummary"></div>
+					</div>
+				</div>
+				<div class="waterfall-card">
+					<div class="waterfall-head">
+						<h3>Waterfall View</h3>
+						<p>Each row shows total request duration, with the wait-to-first-byte portion shaded on top.</p>
+					</div>
+					<div class="waterfall-summary" id="waterfallSummary"></div>
+					<div class="waterfall-legend" id="waterfallLegend"></div>
+					<div class="waterfall-wrap" id="waterfallWrap">
+						<div class="waterfall-empty" id="waterfallEmpty">Start profiling and load a page to see the request timeline.</div>
+						<svg id="waterfallChart" class="waterfall-chart" viewBox="0 0 760 220" preserveAspectRatio="none"></svg>
+					</div>
+				</div>
+				<div class="domain-card">
+					<div class="domain-head">
+						<h3>Domain Time Share</h3>
+						<p>Cumulative request duration grouped by hostname. Useful as a quick “who is expensive?” view.</p>
+					</div>
+					<div class="domain-grid">
+						<div class="domain-chart-wrap">
+							<div class="domain-empty" id="domainEmpty">Profile a page to see which domains consume the most cumulative request time.</div>
+							<svg id="domainChart" class="domain-chart" viewBox="0 0 220 220" preserveAspectRatio="xMidYMid meet"></svg>
+						</div>
+						<div class="domain-list" id="domainList"></div>
+					</div>
+				</div>
+				<div class="profile-table-wrap">
+					<table class="profile-table">
+						<thead>
+							<tr>
+								<th>Method</th>
+								<th>Status</th>
+								<th>Type</th>
+								<th>Duration</th>
+								<th>URL</th>
+							</tr>
+						</thead>
+						<tbody id="profileTableBody"></tbody>
+					</table>
+				</div>
+				<div class="hover-panel is-hidden" id="profileHoverPanel" role="dialog" aria-label="Request details">
+					<div class="hover-panel-title" id="profileHoverTitle"></div>
+					<div class="hover-panel-grid" id="profileHoverGrid"></div>
+				</div>
+			</section>
+
+			<section class="panel" data-panel="rewrite">
+				<div class="section-head">
+					<div>
+						<h2>Rewrite Rules</h2>
+						<p>Rewrite and header overrides are compiled into MV3 dynamic `declarativeNetRequest` rules.</p>
+					</div>
+					<button type="button" class="primary-button" id="addRewriteRuleButton">Add Rule</button>
+				</div>
+				<div class="empty-state" id="rewriteEmptyState">No rewrite rules yet.</div>
+				<div class="rule-list" id="rewriteRuleList"></div>
+			</section>
+
+			<section class="panel" data-panel="proxy">
+				<div class="section-head">
+					<div>
+						<h2>Proxy Rules</h2>
+						<p>Active proxy rules are already enforced by the service worker using the new storage model.</p>
+					</div>
+					<button type="button" class="primary-button" id="addProxyRuleButton">Add Rule</button>
+				</div>
+				<div class="empty-state" id="proxyEmptyState">No proxy rules yet.</div>
+				<div class="rule-list" id="proxyRuleList"></div>
+			</section>
+
+			<section class="panel" data-panel="scripts">
+				<div class="section-head">
+					<div>
+						<h2>Script Rules</h2>
+						<p>CSS URLs work. JavaScript must be bundled as an extension asset before it can be injected.</p>
+					</div>
+					<button type="button" class="primary-button" id="addScriptRuleButton">Add Rule</button>
+				</div>
+				<div class="empty-state" id="scriptEmptyState">No script rules yet.</div>
+				<div class="rule-list" id="scriptRuleList"></div>
+			</section>
+		</main>
+	</div>
+
+	<script type="module" src="./popup.js"></script>
+</body>
+</html>

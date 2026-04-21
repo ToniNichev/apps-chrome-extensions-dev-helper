@@ -22,6 +22,13 @@ chrome.runtime.onMessage.addListener(function(msg, sender, response) {
 			var type = url.split('.').pop();
 
 			if(type == "js") {
+				if(!isExtensionHostedAsset(url)) {
+					info.success = false;
+					info.key = msg.key;
+					info.error = "Remote JavaScript injection is disabled in the MV3 skeleton. Bundle the script with the extension first.";
+					response(info);
+					return true;
+				}
 
 				(function(d, script) {
 					script = d.createElement('script');
@@ -77,3 +84,7 @@ chrome.runtime.onMessage.addListener(function(msg, sender, response) {
 });
 
 // chrome.extension.sendMessage({message: "report"}, function(response) {});
+
+function isExtensionHostedAsset(url) {
+	return url.indexOf(chrome.runtime.getURL("")) === 0;
+}

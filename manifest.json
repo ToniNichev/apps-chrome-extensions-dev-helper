@@ -1,34 +1,58 @@
 {
   "name": "Dev Helper",
-  "version": "2.5",
-  "description": "Dev Helper",
-  "content_security_policy": "script-src 'self'; object-src 'self'",
-  
-	"content_scripts": [ {
-		"js": [ "assets/scripts/jquery.min.js", "assets/scripts/page_content.js" ],
-		"matches": [ "http://*/*", "https://*/*"],
-		"run_at":     "document_idle",
-		"all_frames": false
-	}],  
-  
-  
-  "permissions": [
-				  "storage", 
-  				  "webRequest", 
-  				  "webRequestBlocking", 
-				  "proxy",
-				   "<all_urls>"
-  				  ],
-  "background": {
-	"page": "background.html"
+  "description": "Modern MV3 rebuild of Dev Helper for profiling, proxy rules, rewrite rules, header overrides, and script injection.",
+  "version": "3.1.0",
+  "manifest_version": 3,
+  "minimum_chrome_version": "116",
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
   },
-
-
- "browser_action": {
-   "default_title": "Selected Text",
-   "default_icon": "settings.png",
-   "default_popup": "markups/popup.html" 
- },  
-
-  "manifest_version": 2  
+  "permissions": [
+    "storage",
+    "declarativeNetRequest",
+    "webRequest",
+    "proxy",
+    "tabs"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "background": {
+    "service_worker": "app/background/service-worker.js",
+    "type": "module"
+  },
+  "action": {
+    "default_title": "Dev Helper",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png"
+    },
+    "default_popup": "app/popup/popup.html"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "http://*/*",
+        "https://*/*"
+      ],
+      "js": [
+        "app/content/injector.js"
+      ],
+      "run_at": "document_idle",
+      "all_frames": false
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "app/injected/*.js"
+      ],
+      "matches": [
+        "<all_urls>"
+      ]
+    }
+  ]
 }

@@ -10,9 +10,6 @@
  * @param caseinsensitive
  */
 function addRewriteRule(url, replacement, request_header_override, response_header_override, active, global, caseinsensitive) {
-	
-	var bkg = chrome.extension.getBackgroundPage();
-	
 	// uuid for the panels
 	var c = new Date().getTime();
 	// draw the rewrite rule
@@ -124,7 +121,7 @@ function saveRewriteRule() {
 		co++;
 	});
 		
-	localStorage.rewrite_rules = JSON.stringify(rules);
+	setStorageValue('rewrite_rules', rules);
 }
 
 
@@ -139,11 +136,9 @@ $(document).ready(function(){
 		saveRewriteRule();
 	});		
 
-	//console.log("################################")
-	//console.log(localStorage.rewrite_rules);
-	if(typeof localStorage.rewrite_rules != "undefined") {
-		var rewrite_rules = JSON.parse( localStorage.rewrite_rules);	    
-	    
+	getStorageValue('rewrite_rules', function(rewrite_rules) {
+		rewrite_rules = rewrite_rules || {};
+
 	    for(var c in rewrite_rules) {
 	    	addRewriteRule( rewrite_rules[c].url,
 	    					rewrite_rules[c].replacement,		                         
@@ -152,7 +147,6 @@ $(document).ready(function(){
 	    					rewrite_rules[c].active,
 	    					rewrite_rules[c].global,
 	    					rewrite_rules[c].caseinsensitive);
-	    }        
-	}
-	
+	    }
+	});
 });

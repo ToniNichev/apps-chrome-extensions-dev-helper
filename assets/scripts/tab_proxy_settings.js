@@ -29,9 +29,6 @@ function proxyTypeHideFields(proxy_type, divID) {
  * @param caseinsensitive
  */
 function addProxyRule(url, proxy_type, proxy_location, proxy_port, active, global, caseinsensitive) {
-	
-	var bkg = chrome.extension.getBackgroundPage();
-	
 	// uuid for the panels
 	var c = new Date().getTime();
 	// draw the proxy rule
@@ -148,7 +145,7 @@ function saveproxyRule() {
 		co++;
 	});
 		
-	localStorage.proxy_rules = JSON.stringify(rules);
+	setStorageValue('proxy_rules', rules);
 }
 
 
@@ -164,16 +161,17 @@ $(document).ready(function(){
 	});	
 	
 
-	var proxy_rules = JSON.parse( localStorage.proxy_rules);
-	
-        
-    for(var c in proxy_rules) {
-    	addProxyRule( proxy_rules[c].url,
-    					proxy_rules[c].proxy_type,		                         
-    					proxy_rules[c].proxy_location,
-    					proxy_rules[c].proxy_port,
-    					proxy_rules[c].active,
-    					proxy_rules[c].global,
-    					proxy_rules[c].caseinsensitive);
-    }        
+	getStorageValue('proxy_rules', function(proxy_rules) {
+		proxy_rules = proxy_rules || {};
+
+	    for(var c in proxy_rules) {
+	    	addProxyRule( proxy_rules[c].url,
+	    					proxy_rules[c].proxy_type,		                         
+	    					proxy_rules[c].proxy_location,
+	    					proxy_rules[c].proxy_port,
+	    					proxy_rules[c].active,
+	    					proxy_rules[c].global,
+	    					proxy_rules[c].caseinsensitive);
+	    }
+	});
 });

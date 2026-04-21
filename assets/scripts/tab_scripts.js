@@ -10,8 +10,6 @@
  * @param caseinsensitive
  */
 function addScript(script_location, execute_type, active) {
-	var bkg = chrome.extension.getBackgroundPage();
-	
 	// uuid for the panels
 	var c = new Date().getTime();
 	// draw the proxy rule
@@ -107,7 +105,7 @@ function saveScript() {
 		co++;
 	});
 		
-	localStorage.scripts_settings = JSON.stringify(rules);
+	setStorageValue('scripts_settings', rules);
 }
 
 
@@ -128,15 +126,14 @@ $(document).ready(function(){
 		saveScript();
 	});	
 	
-	if(typeof localStorage.scripts_settings != "undefined") {
-		var scripts_settings = JSON.parse( localStorage.scripts_settings);
-		if(scripts_settings != "undefined") {
-		    for(var c in scripts_settings) {
-		    		 addScript( scripts_settings[c].script_location,
-		    					scripts_settings[c].execute_type,
-		    					scripts_settings[c].active
-		    		 );
-		    }
-		}
-	}
+	getStorageValue('scripts_settings', function(scripts_settings) {
+		scripts_settings = scripts_settings || {};
+
+	    for(var c in scripts_settings) {
+	    		 addScript( scripts_settings[c].script_location,
+	    					scripts_settings[c].execute_type,
+	    					scripts_settings[c].active
+	    		 );
+	    }
+	});
 });
