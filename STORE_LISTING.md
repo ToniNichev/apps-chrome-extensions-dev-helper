@@ -56,11 +56,12 @@ Paste one of these into the corresponding field in the dashboard's Permissions t
 >
 > All rules and captured data stay on your device — Dev Helper doesn't collect, transmit, or sell any data. See the privacy policy for details.
 
-## Assets still needed before submission (manual — not generated here)
+## Assets still needed before submission
 
-- [ ] At least one screenshot, 1280×800 or 640×400, showing the popup UI (the existing `settings.png` predates the MV3 redesign and shouldn't be reused as-is).
+- [x] Screenshot, 1280×800, no alpha channel: `store-assets/screenshot-mock-rules.jpg`. Rendered headlessly from the real `popup.html`/`popup.css` (accurate UI), but with hand-written sample rule data rather than a live capture — swap for a real capture once you've clicked through the extension yourself, or add more (e.g. Profiling tab with live data) alongside it.
 - [ ] Optional small promo tile (440×280) and marquee (1400×560) if you want better placement.
-- [ ] A Chrome Web Store developer account ($5 one-time registration fee if not already registered).
+- [ ] A Chrome Web Store developer account ($5 one-time registration fee if not already registered) — requires payment details, so this has to be done by you directly.
+- [ ] Fill out the Developer Dashboard fields using the text above — requires your Google account login, so this also has to be done by you directly.
 - [ ] Decide the contact email shown on the listing (separate from the privacy policy contact).
 
 ## Packaging
