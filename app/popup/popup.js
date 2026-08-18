@@ -1,6 +1,6 @@
 import { createDefaultState, createId } from "../shared/schema.js";
 import { getState, setState } from "../shared/storage.js";
-import { summarizeValidation, validateProxyRule, validateRewriteRule, validateScriptRule } from "../shared/validation.js";
+import { summarizeValidation, validateMockRule, validateProxyRule, validateRewriteRule, validateScriptRule } from "../shared/validation.js";
 
 const extensionBaseUrl = chrome.runtime.getURL("");
 let appState = createDefaultState();
@@ -43,6 +43,10 @@ function wireGlobalEvents() {
 		appState.scriptRules.push(createScriptRule());
 		saveAndRender();
 	});
+	document.getElementById("addMockRuleButton").addEventListener("click", function() {
+		appState.mockRules.push(createMockRule());
+		saveAndRender();
+	});
 }
 
 function handleTabClick(event) {
@@ -80,6 +84,7 @@ function render() {
 	renderRewriteRules();
 	renderProxyRules();
 	renderScriptRules();
+	renderMockRules();
 }
 
 function renderTabs() {
@@ -180,6 +185,7 @@ function renderValidationSummary() {
 	appendIssueItems(items, "Rewrite", validation.rewriteIssues);
 	appendIssueItems(items, "Proxy", validation.proxyIssues);
 	appendIssueItems(items, "Script", validation.scriptIssues);
+	appendIssueItems(items, "Mock", validation.mockIssues);
 
 	target.innerHTML = '<div class="issue-list">' + items.map(function(item) {
 		return '<div class="issue-pill is-warning">' + escapeHtml(item) + "</div>";
@@ -401,6 +407,15 @@ function renderScriptRules() {
 	});
 }
 
+function renderMockRules() {
+	renderRuleSection({
+		emptyId: "mockEmptyState",
+		containerId: "mockRuleList",
+		rules: appState.mockRules,
+		renderRule: renderMockRule
+	});
+}
+
 function renderRuleSection(config) {
 	const emptyState = document.getElementById(config.emptyId);
 	const container = document.getElementById(config.containerId);
@@ -482,6 +497,34 @@ function renderScriptRule(rule) {
 		]),
 		renderTextField("Source", "source", rule.source, "full-span"),
 		'<p class="hint full-span">JavaScript must use an extension URL like <code>' + escapeHtml(chrome.runtime.getURL("app/injected/example.js")) + "</code>.</p>",
+		renderRuleIssues(issues),
+		"</div>",
+		"</article>"
+	].join("");
+}
+
+function renderMockRule(rule) {
+	const issues = validateMockRule(rule);
+
+	return [
+		'<article class="rule-card" data-rule-type="mock" data-rule-id="' + escapeHtml(rule.id) + '">',
+		renderRuleHead(rule),
+		'<div class="rule-grid">',
+		renderTextField("Name", "name", rule.name),
+		renderRegexFlagsField(rule.regexFlags),
+		renderTextField("Match URL Regex", "matchUrl", rule.matchUrl, "full-span"),
+		renderSelectField("Method", "method", rule.method, [
+			["ANY", "Any"],
+			["GET", "GET"],
+			["POST", "POST"],
+			["PUT", "PUT"],
+			["PATCH", "PATCH"],
+			["DELETE", "DELETE"]
+		]),
+		renderTextField("Status Code", "status", rule.status),
+		renderTextareaField("Response Headers", "responseHeaders", rule.responseHeaders),
+		renderTextareaField("Response Body", "responseBody", rule.responseBody),
+		'<p class="hint full-span">Set a <code>content-type</code> line in Response Headers (e.g. <code>content-type: application/json</code>) to control how the body is interpreted. Mocking intercepts the page’s own <code>fetch()</code> calls directly; it does not use declarativeNetRequest.</p>',
 		renderRuleIssues(issues),
 		"</div>",
 		"</article>"
@@ -598,6 +641,8 @@ function getRuleCollection(type) {
 			return appState.proxyRules;
 		case "script":
 			return appState.scriptRules;
+		case "mock":
+			return appState.mockRules;
 		default:
 			return [];
 	}
@@ -613,6 +658,9 @@ function assignRuleCollection(type, value) {
 			break;
 		case "script":
 			appState.scriptRules = value;
+			break;
+		case "mock":
+			appState.mockRules = value;
 			break;
 	}
 }
@@ -677,6 +725,20 @@ function createScriptRule() {
 		assetType: "css",
 		source: "",
 		injectInto: "head"
+	};
+}
+
+function createMockRule() {
+	return {
+		id: createId("mock"),
+		name: "",
+		active: true,
+		matchUrl: "",
+		regexFlags: "gi",
+		method: "ANY",
+		status: "200",
+		responseHeaders: "content-type: application/json",
+		responseBody: "{}"
 	};
 }
 

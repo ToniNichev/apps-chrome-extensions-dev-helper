@@ -14,6 +14,10 @@ let dnrStatus = {
 let capabilityWarnings = {
 	scripts: false
 };
+let compiledProxyMatchers = [];
+let compiledScriptMatchers = [];
+let compiledMockMatchers = [];
+let appliedProxyRuleId = null;
 
 bootstrap();
 
@@ -31,9 +35,11 @@ chrome.storage.onChanged.addListener(function(changes, areaName) {
 	}
 
 	cachedState = changes[STORAGE_KEY].newValue || createDefaultState();
+	recompileMatchers(cachedState);
 	syncAndStoreDynamicRules(cachedState).catch(function(error) {
 		console.error("Failed to sync dynamic rules after storage change", error);
 	});
+	pushMockRulesToOpenTabs();
 });
 
 chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
@@ -112,6 +118,7 @@ chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
 
 async function bootstrap() {
 	cachedState = await ensureState();
+	recompileMatchers(cachedState);
 	await syncAndStoreDynamicRules(cachedState);
 }
 
@@ -132,6 +139,12 @@ async function handleMessage(message) {
 			return {
 				ok: true,
 				data: buildRuntimeState()
+			};
+
+		case "RUNTIME_GET_MOCK_RULES":
+			return {
+				ok: true,
+				data: getActiveMockRulesForUrl(message.url || "")
 			};
 
 		default:
@@ -223,17 +236,90 @@ function trimProfileRecords() {
 }
 
 function getActiveScriptRulesForUrl(url) {
-	return cachedState.scriptRules.filter(function(rule) {
-		return rule.active && matchesRule(rule.matchUrl, rule.regexFlags, url);
+	return compiledScriptMatchers.filter(function(entry) {
+		return entry.matches(url);
+	}).map(function(entry) {
+		return entry.rule;
 	});
 }
 
 function applyMatchingProxyRule(url) {
-	cachedState.proxyRules.forEach(function(rule) {
-		if (rule.active && matchesRule(rule.matchUrl, rule.regexFlags, url)) {
-			useProxy(rule);
-		}
+	const match = compiledProxyMatchers.find(function(entry) {
+		return entry.matches(url);
 	});
+
+	if (match) {
+		if (appliedProxyRuleId !== match.rule.id) {
+			appliedProxyRuleId = match.rule.id;
+			useProxy(match.rule);
+		}
+		return;
+	}
+
+	if (appliedProxyRuleId !== null) {
+		appliedProxyRuleId = null;
+		chrome.proxy.settings.clear({ scope: "regular" });
+	}
+}
+
+function recompileMatchers(state) {
+	compiledProxyMatchers = compileMatchers(state.proxyRules);
+	compiledScriptMatchers = compileMatchers(state.scriptRules);
+	compiledMockMatchers = compileMatchers(state.mockRules);
+}
+
+function getActiveMockRulesForUrl(url) {
+	return compiledMockMatchers.filter(function(entry) {
+		return entry.matches(url);
+	}).map(function(entry) {
+		return entry.rule;
+	});
+}
+
+function pushMockRulesToOpenTabs() {
+	chrome.tabs.query({ url: ["http://*/*", "https://*/*"] }, function(tabs) {
+		tabs.forEach(function(tab) {
+			chrome.tabs.sendMessage(tab.id, {
+				type: "SYNC_MOCK_RULES",
+				rules: getActiveMockRulesForUrl(tab.url || "")
+			}, function() {
+				chrome.runtime.lastError;
+			});
+		});
+	});
+}
+
+function compileMatchers(rules) {
+	return (rules || []).filter(function(rule) {
+		return rule.active;
+	}).map(function(rule) {
+		return {
+			rule: rule,
+			matches: compileMatcher(rule.matchUrl, rule.regexFlags)
+		};
+	});
+}
+
+function compileMatcher(pattern, flags) {
+	if (!pattern) {
+		return function() {
+			return true;
+		};
+	}
+
+	let regex;
+	try {
+		regex = new RegExp(pattern, flags || "");
+	} catch (error) {
+		console.warn("Invalid rule regex", pattern, error);
+		return function() {
+			return false;
+		};
+	}
+
+	return function(value) {
+		return regex.test(value);
+	};
 }
 
 function useProxy(rule) {
@@ -280,17 +366,4 @@ function useProxy(rule) {
 		value: config,
 		scope: "regular"
 	});
-}
-
-function matchesRule(pattern, flags, value) {
-	if (!pattern) {
-		return true;
-	}
-
-	try {
-		return new RegExp(pattern, flags || "").test(value);
-	} catch (error) {
-		console.warn("Invalid rule regex", pattern, error);
-		return false;
-	}
 }

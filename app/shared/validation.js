@@ -60,18 +60,42 @@ export function validateScriptRule(rule, extensionBaseUrl) {
 	return issues;
 }
 
+export function validateMockRule(rule) {
+	const issues = [];
+
+	pushRegexIssues(issues, rule.matchUrl, rule.regexFlags, "Match URL regex");
+	pushHeaderIssues(issues, rule.responseHeaders, "Response headers");
+
+	const statusCode = parseInt(rule.status, 10);
+	if (Number.isNaN(statusCode) || statusCode < 100 || statusCode > 599) {
+		issues.push("Status code must be a number between 100 and 599.");
+	}
+
+	if (hasJsonContentType(rule.responseHeaders) && rule.responseBody) {
+		try {
+			JSON.parse(rule.responseBody);
+		} catch (error) {
+			issues.push("Response body does not parse as JSON, but Content-Type is application/json.");
+		}
+	}
+
+	return issues;
+}
+
 export function summarizeValidation(state, extensionBaseUrl) {
 	const rewriteIssues = flattenIssues(state.rewriteRules || [], validateRewriteRule);
 	const proxyIssues = flattenIssues(state.proxyRules || [], validateProxyRule);
 	const scriptIssues = flattenIssues(state.scriptRules || [], function(rule) {
 		return validateScriptRule(rule, extensionBaseUrl);
 	});
+	const mockIssues = flattenIssues(state.mockRules || [], validateMockRule);
 
 	return {
 		rewriteIssues: rewriteIssues,
 		proxyIssues: proxyIssues,
 		scriptIssues: scriptIssues,
-		totalIssues: rewriteIssues.length + proxyIssues.length + scriptIssues.length
+		mockIssues: mockIssues,
+		totalIssues: rewriteIssues.length + proxyIssues.length + scriptIssues.length + mockIssues.length
 	};
 }
 
@@ -115,6 +139,23 @@ function pushHeaderIssues(issues, rawHeaders, label) {
 		if (!name) {
 			issues.push(label + " line " + (index + 1) + " is missing a header name.");
 		}
+	});
+}
+
+function hasJsonContentType(rawHeaders) {
+	const lines = String(rawHeaders || "").split("\n").filter(function(line) {
+		return line.trim() !== "";
+	});
+
+	return lines.some(function(line) {
+		const separatorIndex = line.indexOf(":");
+		if (separatorIndex === -1) {
+			return false;
+		}
+
+		const name = line.slice(0, separatorIndex).trim().toLowerCase();
+		const value = line.slice(separatorIndex + 1).trim().toLowerCase();
+		return name === "content-type" && value.includes("application/json");
 	});
 }
 

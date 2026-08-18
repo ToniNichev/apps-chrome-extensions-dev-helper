@@ -2,20 +2,51 @@
 	const injectedRuleIds = new Set();
 
 	chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
-		if (!message || message.type !== "INJECT_SCRIPT_RULES" || !Array.isArray(message.rules)) {
+		if (!message || !message.type) {
 			return false;
 		}
 
-		const results = message.rules.map(function(rule) {
-			return injectRule(rule);
-		});
+		if (message.type === "INJECT_SCRIPT_RULES" && Array.isArray(message.rules)) {
+			const results = message.rules.map(function(rule) {
+				return injectRule(rule);
+			});
 
-		sendResponse({
-			ok: true,
-			results: results
-		});
+			sendResponse({
+				ok: true,
+				results: results
+			});
+			return false;
+		}
+
+		if (message.type === "SYNC_MOCK_RULES" && Array.isArray(message.rules)) {
+			syncMockRulesIntoPage(message.rules);
+			sendResponse({ ok: true });
+			return false;
+		}
+
 		return false;
 	});
+
+	chrome.runtime.sendMessage({
+		type: "RUNTIME_GET_MOCK_RULES",
+		url: window.location.href
+	}, function(response) {
+		if (chrome.runtime.lastError) {
+			return;
+		}
+
+		if (response && response.ok && Array.isArray(response.data)) {
+			syncMockRulesIntoPage(response.data);
+		}
+	});
+
+	function syncMockRulesIntoPage(rules) {
+		window.postMessage({
+			__devHelperMock: true,
+			type: "MOCK_RULES_SYNC",
+			rules: rules
+		}, window.location.origin);
+	}
 
 	function injectRule(rule) {
 		if (!rule || !rule.id || injectedRuleIds.has(rule.id)) {

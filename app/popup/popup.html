@@ -13,6 +13,7 @@
 			<button type="button" class="tab-button" data-tab="rewrite">Rewrite Rules</button>
 			<button type="button" class="tab-button" data-tab="proxy">Proxy Rules</button>
 			<button type="button" class="tab-button" data-tab="scripts">Script Rules</button>
+			<button type="button" class="tab-button" data-tab="mock">Mock Rules</button>
 		</nav>
 
 		<main class="panel-stack">
@@ -117,6 +118,18 @@
 				</div>
 				<div class="empty-state" id="scriptEmptyState">No script rules yet.</div>
 				<div class="rule-list" id="scriptRuleList"></div>
+			</section>
+
+			<section class="panel" data-panel="mock">
+				<div class="section-head">
+					<div>
+						<h2>Mock Rules</h2>
+						<p>Intercept the page's own fetch calls and return a fabricated response &mdash; nothing touches the real network.</p>
+					</div>
+					<button type="button" class="primary-button" id="addMockRuleButton">Add Rule</button>
+				</div>
+				<div class="empty-state" id="mockEmptyState">No mock rules yet.</div>
+				<div class="rule-list" id="mockRuleList"></div>
 			</section>
 		</main>
 	</div>

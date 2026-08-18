@@ -22,7 +22,8 @@ export function createDefaultState() {
 		},
 		rewriteRules: [],
 		proxyRules: [],
-		scriptRules: []
+		scriptRules: [],
+		mockRules: []
 	};
 }
 
@@ -42,7 +43,8 @@ export function normalizeState(candidate) {
 		},
 		rewriteRules: normalizeRuleArray(value.rewriteRules, normalizeRewriteRule),
 		proxyRules: normalizeRuleArray(value.proxyRules, normalizeProxyRule),
-		scriptRules: normalizeRuleArray(value.scriptRules, normalizeScriptRule)
+		scriptRules: normalizeRuleArray(value.scriptRules, normalizeScriptRule),
+		mockRules: normalizeRuleArray(value.mockRules, normalizeMockRule)
 	};
 }
 
@@ -100,6 +102,22 @@ function normalizeScriptRule(rule) {
 		assetType: source.assetType || "css",
 		source: source.source || "",
 		injectInto: source.injectInto === "body" ? "body" : "head"
+	};
+}
+
+function normalizeMockRule(rule) {
+	const source = rule && typeof rule === "object" ? rule : {};
+
+	return {
+		id: source.id || createId("mock"),
+		name: source.name || "",
+		active: Boolean(source.active),
+		matchUrl: source.matchUrl || "",
+		regexFlags: normalizeRegexFlags(source.regexFlags || ""),
+		method: source.method || "ANY",
+		status: source.status || "200",
+		responseHeaders: source.responseHeaders || "",
+		responseBody: source.responseBody || ""
 	};
 }
 
