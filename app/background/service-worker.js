@@ -269,9 +269,7 @@ function recompileMatchers(state) {
 }
 
 function getActiveMockRulesForUrl(url) {
-	return compiledMockMatchers.filter(function(entry) {
-		return entry.matches(url);
-	}).map(function(entry) {
+	return compiledMockMatchers.map(function(entry) {
 		return entry.rule;
 	});
 }
