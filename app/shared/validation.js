@@ -1,3 +1,16 @@
+export function isValidRegex(pattern, flags) {
+	if (!pattern) {
+		return true;
+	}
+
+	try {
+		new RegExp(pattern, flags || "");
+		return true;
+	} catch (error) {
+		return false;
+	}
+}
+
 export function validateRewriteRule(rule) {
 	const issues = [];
 
@@ -116,9 +129,7 @@ function pushRegexIssues(issues, pattern, flags, label) {
 		return;
 	}
 
-	try {
-		new RegExp(pattern, flags || "");
-	} catch (error) {
+	if (!isValidRegex(pattern, flags)) {
 		issues.push(label + " is not a valid regular expression.");
 	}
 }

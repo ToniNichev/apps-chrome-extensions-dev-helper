@@ -1,6 +1,6 @@
 import { createDefaultState, createId } from "../shared/schema.js";
 import { getState, setState } from "../shared/storage.js";
-import { summarizeValidation, validateMockRule, validateProxyRule, validateRewriteRule, validateScriptRule } from "../shared/validation.js";
+import { isValidRegex, summarizeValidation, validateMockRule, validateProxyRule, validateRewriteRule, validateScriptRule } from "../shared/validation.js";
 
 const extensionBaseUrl = chrome.runtime.getURL("");
 let appState = createDefaultState();
@@ -441,7 +441,7 @@ function renderRewriteRule(rule) {
 		'<div class="rule-grid">',
 		renderTextField("Name", "name", rule.name),
 		renderRegexFlagsField(rule.regexFlags),
-		renderTextField("Match URL Regex", "matchUrl", rule.matchUrl, "full-span"),
+		renderTextField("Match URL Regex", "matchUrl", rule.matchUrl, "full-span", !isValidRegex(rule.matchUrl, rule.regexFlags)),
 		renderTextField("Replacement URL", "replacementUrl", rule.replacementUrl, "full-span"),
 		renderTextareaField("Request Headers", "requestHeaders", rule.requestHeaders),
 		renderTextareaField("Response Headers", "responseHeaders", rule.responseHeaders),
@@ -461,7 +461,7 @@ function renderProxyRule(rule) {
 		'<div class="rule-grid">',
 		renderTextField("Name", "name", rule.name),
 		renderRegexFlagsField(rule.regexFlags),
-		renderTextField("Match URL Regex", "matchUrl", rule.matchUrl, "full-span"),
+		renderTextField("Match URL Regex", "matchUrl", rule.matchUrl, "full-span", !isValidRegex(rule.matchUrl, rule.regexFlags)),
 		renderSelectField("Proxy Mode", "proxyMode", rule.proxyMode, [
 			["direct", "Direct"],
 			["system", "System Proxy"],
@@ -486,7 +486,7 @@ function renderScriptRule(rule) {
 		'<div class="rule-grid">',
 		renderTextField("Name", "name", rule.name),
 		renderRegexFlagsField(rule.regexFlags),
-		renderTextField("Match URL Regex", "matchUrl", rule.matchUrl, "full-span"),
+		renderTextField("Match URL Regex", "matchUrl", rule.matchUrl, "full-span", !isValidRegex(rule.matchUrl, rule.regexFlags)),
 		renderSelectField("Asset Type", "assetType", rule.assetType, [
 			["css", "CSS URL"],
 			["js", "Bundled JS Asset"]
@@ -512,7 +512,7 @@ function renderMockRule(rule) {
 		'<div class="rule-grid">',
 		renderTextField("Name", "name", rule.name),
 		renderRegexFlagsField(rule.regexFlags),
-		renderTextField("Match URL Regex", "matchUrl", rule.matchUrl, "full-span"),
+		renderTextField("Match URL Regex", "matchUrl", rule.matchUrl, "full-span", !isValidRegex(rule.matchUrl, rule.regexFlags)),
 		renderSelectField("Method", "method", rule.method, [
 			["ANY", "Any"],
 			["GET", "GET"],
@@ -540,11 +540,11 @@ function renderRuleHead(rule) {
 	].join("");
 }
 
-function renderTextField(label, field, value, className) {
+function renderTextField(label, field, value, className, isInvalid) {
 	return [
 		'<div class="field ' + (className || "") + '">',
 		"<label>" + escapeHtml(label) + "</label>",
-		'<input type="text" data-field="' + escapeHtml(field) + '" value="' + escapeHtml(value || "") + '">',
+		'<input type="text" data-field="' + escapeHtml(field) + '" class="' + (isInvalid ? "is-invalid" : "") + '" value="' + escapeHtml(value || "") + '">',
 		"</div>"
 	].join("");
 }
@@ -628,6 +628,14 @@ function handleRuleFieldInput(event) {
 
 	const fieldName = event.target.dataset.field;
 	targetRule[fieldName] = event.target.type === "checkbox" ? event.target.checked : event.target.value;
+
+	if (fieldName === "matchUrl" || fieldName === "regexFlags") {
+		const matchUrlInput = card.querySelector('[data-field="matchUrl"]');
+		if (matchUrlInput) {
+			matchUrlInput.classList.toggle("is-invalid", !isValidRegex(targetRule.matchUrl, targetRule.regexFlags));
+		}
+	}
+
 	persistState().then(function() {
 		renderValidationSummary();
 	});

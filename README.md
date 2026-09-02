@@ -18,7 +18,7 @@ A Manifest V3 Chrome extension for profiling network requests and defining rewri
 - **Profiling**: request timing, a waterfall view, and a per-domain time-share chart.
 - **Proxy rules**: applies `chrome.proxy.settings` based on the first matching active rule, and clears back to direct when no rule matches (no longer leaves a stale proxy applied after a rule is deactivated).
 - **Rewrite rules & header overrides**: compiled into MV3 dynamic `declarativeNetRequest` rules.
-- **Mock rules**: intercepts a page's own `fetch()` calls and returns a locally-defined response — no backend involved. XHR is not yet covered (fetch-only for now).
+- **Mock rules**: intercepts a page's own `fetch()` and `XMLHttpRequest` calls and returns a locally-defined response — no backend involved.
 - **Script rules**: CSS URLs work directly; JavaScript must be bundled as an extension asset (MV3 does not allow injecting/evaling remote script).
 
 ## Packaging & Chrome Web Store submission
@@ -34,5 +34,4 @@ A Manifest V3 Chrome extension for profiling network requests and defining rewri
 ## Next steps
 
 1. Add automated test coverage — the repo currently has none; the DNR compiler and validation logic in `app/shared/validation.js` are the highest-value places to start.
-2. Add XHR support to mock rules (currently `fetch()`-only).
-3. Add an options/debug surface for deeper troubleshooting.
+2. Add an options/debug surface for deeper troubleshooting.
