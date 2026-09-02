@@ -19,6 +19,9 @@ let compiledScriptMatchers = [];
 let compiledMockMatchers = [];
 let appliedProxyRuleId = null;
 
+const EXTERNAL_API_VERSION = 1;
+const ALLOWED_EXTERNAL_ORIGINS = ["https://swissdev.tools"];
+
 bootstrap();
 
 chrome.runtime.onInstalled.addListener(function() {
@@ -54,6 +57,68 @@ chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
 
 	return true;
 });
+
+chrome.runtime.onMessageExternal.addListener(function(message, sender, sendResponse) {
+	if (!isAllowedExternalSender(sender)) {
+		sendResponse({ ok: false, error: "This site is not allowed to use the Dev Helper relay." });
+		return false;
+	}
+
+	if (!message || !message.type) {
+		sendResponse({ ok: false, error: "Missing message type." });
+		return false;
+	}
+
+	if (message.type === "DEV_HELPER_PING") {
+		sendResponse({ ok: true, version: EXTERNAL_API_VERSION });
+		return false;
+	}
+
+	if (message.type === "DEV_HELPER_PROXY_FETCH") {
+		handleProxyFetch(message).then(sendResponse).catch(function(error) {
+			sendResponse({
+				ok: false,
+				error: error && error.message ? error.message : "Proxy fetch failed."
+			});
+		});
+		return true;
+	}
+
+	sendResponse({ ok: false, error: "Unsupported message type." });
+	return false;
+});
+
+function isAllowedExternalSender(sender) {
+	return Boolean(sender && ALLOWED_EXTERNAL_ORIGINS.indexOf(sender.origin) !== -1);
+}
+
+async function handleProxyFetch(message) {
+	const url = String(message.url || "");
+	if (!/^https?:\/\//i.test(url)) {
+		return { ok: false, error: "URL must start with http:// or https://." };
+	}
+
+	const method = String(message.method || "GET").toUpperCase();
+	const headers = message.headers && typeof message.headers === "object" ? message.headers : {};
+	const body = (method === "GET" || method === "HEAD") ? undefined : message.body;
+
+	const t0 = Date.now();
+	const response = await fetch(url, {
+		method: method,
+		headers: headers,
+		body: body || undefined
+	});
+	const text = await response.text();
+
+	return {
+		ok: true,
+		status: response.status,
+		statusText: response.statusText,
+		headers: Array.from(response.headers.entries()),
+		body: text,
+		elapsedMs: Date.now() - t0
+	};
+}
 
 chrome.webRequest.onBeforeRequest.addListener(function(details) {
 	if (details.tabId === -1) {
