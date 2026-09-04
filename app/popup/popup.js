@@ -251,7 +251,7 @@ function renderWaterfallChart(requestList) {
 		legendChip("Stylesheet", colorForRequestType("stylesheet")),
 		legendChip("XHR", colorForRequestType("xmlhttprequest")),
 		legendChip("Image", colorForRequestType("image")),
-		legendChip("Wait / TTFB overlay", "#1d2430", true)
+		legendChip("Wait / TTFB overlay", "#a6adc8", true)
 	].join("");
 
 	const axis = buildWaterfallAxis(leftPadding, topPadding, timelineWidth, totalDuration, height, mainDocumentRequest ? mainDocumentRequest.timeStampStart - earliestStart : null);
@@ -277,18 +277,18 @@ function renderWaterfallChart(requestList) {
 			"Duration: " + Math.round(duration) + "ms",
 			request.statusCode ? "Status: " + request.statusCode : ""
 		].filter(Boolean).join(" | ");
-		const stroke = request.requestId === slowestRequest.requestId ? ' stroke="#b44d26" stroke-width="1.5"' : "";
+		const stroke = request.requestId === slowestRequest.requestId ? ' stroke="#cba6f7" stroke-width="1.5"' : "";
 
 		return [
-			'<text x="8" y="' + (y + 11) + '" font-size="10" fill="#5d6470">' + escapeHtml(label) + "</text>",
+			'<text x="8" y="' + (y + 11) + '" font-size="10" fill="#a6adc8">' + escapeHtml(label) + "</text>",
 			'<rect data-request-id="' + escapeHtml(String(request.requestId || "")) + '" x="' + x + '" y="' + y + '" width="' + barWidth + '" height="' + rowHeight + '" rx="6" fill="' + color + '"' + stroke + '><title>' + escapeHtml(tooltip) + '</title></rect>',
 			(firstByteWidth > 0
-				? '<rect data-request-id="' + escapeHtml(String(request.requestId || "")) + '" x="' + x + '" y="' + y + '" width="' + firstByteWidth + '" height="' + rowHeight + '" rx="6" fill="#1d2430" opacity="0.18"><title>' + escapeHtml(tooltip) + '</title></rect>'
+				? '<rect data-request-id="' + escapeHtml(String(request.requestId || "")) + '" x="' + x + '" y="' + y + '" width="' + firstByteWidth + '" height="' + rowHeight + '" rx="6" fill="#11111b" opacity="0.35"><title>' + escapeHtml(tooltip) + '</title></rect>'
 				: ""),
 			(firstByteWidth > 0 && firstByteWidth < barWidth
-				? '<line x1="' + firstByteMarkerX + '" y1="' + (y + 1) + '" x2="' + firstByteMarkerX + '" y2="' + (y + rowHeight - 1) + '" stroke="#fffaf0" stroke-width="1.2"></line>'
+				? '<line x1="' + firstByteMarkerX + '" y1="' + (y + 1) + '" x2="' + firstByteMarkerX + '" y2="' + (y + rowHeight - 1) + '" stroke="#cdd6f4" stroke-width="1.2"></line>'
 				: ""),
-			'<text x="' + Math.min(width - 34, x + barWidth + 6) + '" y="' + (y + 11) + '" font-size="10" fill="#1d2430">' + escapeHtml(String(Math.round(duration)) + "ms") + "</text>"
+			'<text x="' + Math.min(width - 34, x + barWidth + 6) + '" y="' + (y + 11) + '" font-size="10" fill="#a6adc8">' + escapeHtml(String(Math.round(duration)) + "ms") + "</text>"
 		].join("");
 	}).join("");
 
@@ -343,9 +343,9 @@ function renderDomainChart(requestList) {
 		startAngle = endAngle;
 		return '<path data-domain="' + escapeHtml(item.domain) + '" data-duration="' + escapeHtml(String(Math.round(item.duration))) + '" data-requests="' + escapeHtml(String(item.requestCount)) + '" data-share="' + escapeHtml(String(share)) + '" d="' + path + '" fill="' + color + '"><title>' + escapeHtml(tooltip) + '</title></path>';
 	}).join("") +
-		'<circle cx="' + center + '" cy="' + center + '" r="' + innerRadius + '" fill="#fffaf0"></circle>' +
-		'<text x="' + center + '" y="' + (center - 4) + '" text-anchor="middle" font-size="12" fill="#5d6470">Domains</text>' +
-		'<text x="' + center + '" y="' + (center + 16) + '" text-anchor="middle" font-size="18" font-weight="700" fill="#1d2430">' + escapeHtml(String(topDomains.length)) + "</text>";
+		'<circle cx="' + center + '" cy="' + center + '" r="' + innerRadius + '" fill="#252535"></circle>' +
+		'<text x="' + center + '" y="' + (center - 4) + '" text-anchor="middle" font-size="12" fill="#a6adc8">Domains</text>' +
+		'<text x="' + center + '" y="' + (center + 16) + '" text-anchor="middle" font-size="18" font-weight="700" fill="#cdd6f4">' + escapeHtml(String(topDomains.length)) + "</text>";
 
 	list.innerHTML = topDomains.map(function(item, index) {
 		const color = domainColor(index);
@@ -367,14 +367,14 @@ function buildWaterfallAxis(leftPadding, topPadding, timelineWidth, totalDuratio
 	for (let index = 0; index <= marks; index += 1) {
 		const x = leftPadding + ((index / marks) * timelineWidth);
 		const time = Math.round((index / marks) * totalDuration);
-		elements.push('<line x1="' + x + '" y1="10" x2="' + x + '" y2="' + (topPadding - 4) + '" stroke="rgba(29,36,48,0.16)" stroke-width="1"></line>');
-		elements.push('<text x="' + x + '" y="9" text-anchor="middle" font-size="10" fill="#5d6470">' + escapeHtml(String(time) + "ms") + "</text>");
+		elements.push('<line x1="' + x + '" y1="10" x2="' + x + '" y2="' + (topPadding - 4) + '" stroke="rgba(205,214,244,0.12)" stroke-width="1"></line>');
+		elements.push('<text x="' + x + '" y="9" text-anchor="middle" font-size="10" fill="#a6adc8">' + escapeHtml(String(time) + "ms") + "</text>");
 	}
 
 	if (documentOffset !== null) {
 		const markerX = leftPadding + ((documentOffset / totalDuration) * timelineWidth);
-		elements.push('<line x1="' + markerX + '" y1="' + (topPadding - 2) + '" x2="' + markerX + '" y2="' + (chartHeight - 8) + '" stroke="#224f58" stroke-dasharray="3 3" stroke-width="1.2"></line>');
-		elements.push('<text x="' + markerX + '" y="' + (topPadding - 8) + '" text-anchor="middle" font-size="10" fill="#224f58">document</text>');
+		elements.push('<line x1="' + markerX + '" y1="' + (topPadding - 2) + '" x2="' + markerX + '" y2="' + (chartHeight - 8) + '" stroke="#89b4fa" stroke-dasharray="3 3" stroke-width="1.2"></line>');
+		elements.push('<text x="' + markerX + '" y="' + (topPadding - 8) + '" text-anchor="middle" font-size="10" fill="#89b4fa">document</text>');
 	}
 
 	return elements.join("");
@@ -831,17 +831,17 @@ function extractDomain(url) {
 function colorForRequestType(type) {
 	switch (type) {
 		case "main_frame":
-			return "#224f58";
+			return "#89b4fa";
 		case "script":
-			return "#b44d26";
+			return "#cba6f7";
 		case "stylesheet":
-			return "#277055";
+			return "#a6e3a1";
 		case "xmlhttprequest":
-			return "#9a6a14";
+			return "#f9e2af";
 		case "image":
-			return "#7c5c99";
+			return "#fab387";
 		default:
-			return "#6a7280";
+			return "#6c7086";
 	}
 }
 
@@ -862,7 +862,7 @@ function averageMetric(requests, getter) {
 }
 
 function domainColor(index) {
-	const colors = ["#224f58", "#b44d26", "#277055", "#9a6a14", "#7c5c99", "#6a7280"];
+	const colors = ["#89b4fa", "#cba6f7", "#a6e3a1", "#f9e2af", "#fab387", "#6c7086"];
 	return colors[index % colors.length];
 }
 
