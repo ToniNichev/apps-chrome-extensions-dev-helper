@@ -1,6 +1,6 @@
 {
-  "name": "Dev Helper",
-  "description": "Modern MV3 rebuild of Dev Helper for profiling, proxy rules, rewrite rules, header overrides, and script injection.",
+  "name": "SwissDev.tools Dev Helper",
+  "description": "Network profiling, proxy/rewrite/mock rules, and script injection for any site — with a CORS-bypass relay for swissdev.tools.",
   "version": "3.1.0",
   "manifest_version": 3,
   "minimum_chrome_version": "116",
@@ -31,7 +31,7 @@
     "type": "module"
   },
   "action": {
-    "default_title": "Dev Helper",
+    "default_title": "SwissDev.tools Dev Helper",
     "default_icon": {
       "16": "icons/icon16.png",
       "32": "icons/icon32.png"

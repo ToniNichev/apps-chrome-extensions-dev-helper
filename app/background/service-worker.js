@@ -66,7 +66,7 @@ chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
 
 chrome.runtime.onMessageExternal.addListener(function(message, sender, sendResponse) {
 	if (!isAllowedExternalSender(sender)) {
-		sendResponse({ ok: false, error: "This site is not allowed to use the Dev Helper relay." });
+		sendResponse({ ok: false, error: "This site is not allowed to use the SwissDev.tools Dev Helper relay." });
 		return false;
 	}
 

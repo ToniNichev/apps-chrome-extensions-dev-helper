@@ -9,7 +9,7 @@ cd "$repo_root"
 
 version="$(jq -r .version manifest.json)"
 dist_dir="$repo_root/dist"
-zip_path="$dist_dir/dev-helper-v${version}.zip"
+zip_path="$dist_dir/swissdev-tools-dev-helper-v${version}.zip"
 
 mkdir -p "$dist_dir"
 rm -f "$zip_path"

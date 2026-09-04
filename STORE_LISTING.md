@@ -4,9 +4,9 @@ Working notes for the Developer Dashboard fields. Not shipped in the extension p
 
 ## Single purpose
 
-> Dev Helper is a web development debugging toolkit: it lets developers profile network requests, and define rules to rewrite/redirect URLs, override headers, route traffic through a proxy, mock API responses, and inject CSS/JS into pages they are actively developing or testing against.
+> SwissDev.tools Dev Helper is a web development debugging toolkit: it lets developers profile network requests, and define rules to rewrite/redirect URLs, override headers, route traffic through a proxy, mock API responses, and inject CSS/JS into pages they are actively developing or testing against. It also includes a small relay, scoped only to swissdev.tools (the free browser-based dev-tool site from the same developer), that lets that site's own tools bypass CORS and mixed-content restrictions when the user is testing against their own local/dev servers.
 
-Everything in the extension serves that one purpose (inspecting and locally modifying network behavior for development/debugging). If a reviewer pushes back on "single purpose" because of the number of features, the fallback framing is: all four rule types and profiling are different facets of the same activity — controlling and observing network requests during development — not unrelated features bolted together.
+Everything in the extension serves that one purpose (inspecting and locally modifying network behavior for development/debugging). If a reviewer pushes back on "single purpose" because of the number of features, the fallback framing is: all four rule types, profiling, and the swissdev.tools relay are different facets of the same activity — controlling and observing network requests during development — not unrelated features bolted together. If a reviewer questions the swissdev.tools branding on an otherwise general-purpose extension: the extension is built by the same developer as swissdev.tools and works standalone on any site without it — the name and relay are a deliberate cross-promotion between two tools from the same author, not a restriction of scope.
 
 ## Permission justifications
 
@@ -43,10 +43,10 @@ Paste one of these into the corresponding field in the dashboard's Permissions t
 ## Listing description drafts
 
 **Short description** (132 char max):
-> Profile network requests and rewrite, proxy, mock, or inject rules into any site — a local dev/debugging toolkit for Chrome.
+> Profile, rewrite, proxy, and mock network requests on any site — plus a CORS-bypass relay for swissdev.tools.
 
 **Detailed description** (draft — expand as needed):
-> Dev Helper is a network debugging toolkit for developers. It lets you:
+> SwissDev.tools Dev Helper is a network debugging toolkit for developers. It lets you:
 >
 > - **Profile** requests in real time — timing waterfall, per-domain breakdown, and a live request table.
 > - **Rewrite** URLs and override request/response headers, compiled into Chrome's declarativeNetRequest engine.
@@ -54,7 +54,9 @@ Paste one of these into the corresponding field in the dashboard's Permissions t
 > - **Mock** API responses locally by intercepting fetch() calls — no backend required to test error states, empty states, or unreleased API shapes.
 > - **Inject** CSS or bundled JS assets into matching pages.
 >
-> All rules and captured data stay on your device — Dev Helper doesn't collect, transmit, or sell any data. See the privacy policy for details.
+> Works standalone on any site you're developing against. It also pairs with [swissdev.tools](https://swissdev.tools) — a free collection of browser-based dev tools (JSON, JWT, HTTP client, and more) from the same developer — relaying that site's requests past CORS and mixed-content restrictions when you're testing against your own local or dev servers.
+>
+> All rules and captured data stay on your device — this extension doesn't collect, transmit, or sell any data. See the privacy policy for details.
 
 ## Assets still needed before submission
 
@@ -66,4 +68,4 @@ Paste one of these into the corresponding field in the dashboard's Permissions t
 
 ## Packaging
 
-Run `scripts/build-store-zip.sh` from the repo root — it zips only `manifest.json`, `icons/`, and `app/` (the files the MV3 manifest actually references) into `dist/dev-helper-v<version>.zip`, leaving the legacy MV2 reference files (`assets/`, `markups/`, `background.html`) out of the upload.
+Run `scripts/build-store-zip.sh` from the repo root — it zips only `manifest.json`, `icons/`, and `app/` (the files the MV3 manifest actually references) into `dist/swissdev-tools-dev-helper-v<version>.zip`, leaving the legacy MV2 reference files (`assets/`, `markups/`, `background.html`) out of the upload.

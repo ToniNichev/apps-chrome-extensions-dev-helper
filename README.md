@@ -1,6 +1,6 @@
-# Dev Helper
+# SwissDev.tools Dev Helper
 
-A Manifest V3 Chrome extension for profiling network requests and defining rewrite, proxy, mock, and script-injection rules while you develop. All configuration and captured data stay local to your device — see [`PRIVACY.md`](./PRIVACY.md).
+A Manifest V3 Chrome extension for profiling network requests and defining rewrite, proxy, mock, and script-injection rules while you develop. All configuration and captured data stay local to your device — see [`PRIVACY.md`](./PRIVACY.md). Also includes a relay, scoped only to swissdev.tools, that lets that site's own browser-based tools bypass CORS and mixed-content restrictions.
 
 ## App layout
 
@@ -23,7 +23,7 @@ A Manifest V3 Chrome extension for profiling network requests and defining rewri
 
 ## Packaging & Chrome Web Store submission
 
-- `scripts/build-store-zip.sh` builds `dist/dev-helper-v<version>.zip`, containing only the files the manifest references (`manifest.json`, `icons/`, `app/`) — the legacy reference files below are intentionally left out.
+- `scripts/build-store-zip.sh` builds `dist/swissdev-tools-dev-helper-v<version>.zip`, containing only the files the manifest references (`manifest.json`, `icons/`, `app/`) — the legacy reference files below are intentionally left out.
 - `STORE_LISTING.md` has the single-purpose statement, per-permission justifications, and data-disclosure answers for the Developer Dashboard.
 - `PRIVACY.md` is the extension's privacy policy.
 
