@@ -21,6 +21,8 @@ let appliedProxyRuleId = null;
 
 const EXTERNAL_API_VERSION = 1;
 const ALLOWED_EXTERNAL_ORIGINS = ["https://swissdev.tools"];
+const THEME_STORAGE_KEY = "sdtTheme";
+const ALLOWED_THEMES = ["dark", "terminal", "light", "nord", "gruvbox", "synthwave"];
 
 bootstrap();
 
@@ -84,9 +86,39 @@ chrome.runtime.onMessageExternal.addListener(function(message, sender, sendRespo
 		return true;
 	}
 
+	if (message.type === "DEV_HELPER_THEME") {
+		handleThemeSync(message).then(sendResponse).catch(function(error) {
+			sendResponse({
+				ok: false,
+				error: error && error.message ? error.message : "Theme sync failed."
+			});
+		});
+		return true;
+	}
+
 	sendResponse({ ok: false, error: "Unsupported message type." });
 	return false;
 });
+
+/* Caches whichever theme swissdev.tools is currently showing, so the
+   popup can match it on open — see app/popup/popup.js's applySyncedTheme().
+   Stored under its own key, deliberately separate from STORAGE_KEY/
+   normalizeState (the rule-schema state), since this isn't part of that
+   schema and validating it through normalizeState would risk it being
+   silently stripped by a future schema change. */
+async function handleThemeSync(message) {
+	const theme = ALLOWED_THEMES.indexOf(message.theme) !== -1 ? message.theme : "dark";
+	await new Promise(function(resolve, reject) {
+		chrome.storage.local.set({ [THEME_STORAGE_KEY]: theme }, function() {
+			if (chrome.runtime.lastError) {
+				reject(chrome.runtime.lastError);
+				return;
+			}
+			resolve();
+		});
+	});
+	return { ok: true };
+}
 
 function isAllowedExternalSender(sender) {
 	return Boolean(sender && ALLOWED_EXTERNAL_ORIGINS.indexOf(sender.origin) !== -1);

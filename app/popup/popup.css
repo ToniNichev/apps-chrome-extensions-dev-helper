@@ -32,6 +32,126 @@
 	color: var(--ink);
 }
 
+/* ── Remaining site themes, applied via the same [data-theme="X"] attribute
+   swissdev.tools itself uses on <html> — set here by popup.js's
+   applySyncedTheme() from whichever theme the site last pushed over the
+   externally_connectable channel (see assets/dev-helper-relay.js). Token
+   values copied 1:1 from assets/shared.css; mapped onto this file's own
+   token names the same way the default dark theme above was (--text→--ink,
+   --text-sub→--muted, --bg-float→--panel-strong, --bg-input→--input-bg,
+   --tok-anchor→--accent-2, --out-color→--success, --warn-color→--warning,
+   --err-color→--danger, --panel-shadow→--shadow). ── */
+[data-theme="terminal"] {
+	--bg: #030d03;
+	--panel: #060f06;
+	--panel-strong: #0a180a;
+	--input-bg: #020a02;
+	--ink: #00ff41;
+	--muted: #00cc33;
+	--accent: #00e838;
+	--accent-rgb: 0, 232, 56;
+	--accent-2: #00aaff;
+	--accent-2-rgb: 0, 170, 255;
+	--line: #0f3310;
+	--line-hi: #1a5c1c;
+	--success: #00ff41;
+	--success-rgb: 0, 255, 65;
+	--warning: #ff9900;
+	--warning-rgb: 255, 153, 0;
+	--danger: #ff4040;
+	--danger-rgb: 255, 64, 64;
+	--shadow: 0 4px 24px rgba(0, 60, 0, 0.40);
+	font-family: 'JetBrains Mono', monospace;
+}
+
+[data-theme="light"] {
+	--bg: #f4f5fb;
+	--panel: #ffffff;
+	--panel-strong: #eef0f8;
+	--input-bg: #f8f9fd;
+	--ink: #1e1f30;
+	--muted: #4b5068;
+	--accent: #6366f1;
+	--accent-rgb: 99, 102, 241;
+	--accent-2: #3b82f6;
+	--accent-2-rgb: 59, 130, 246;
+	--line: #dde1ee;
+	--line-hi: #bcc2d6;
+	--success: #059669;
+	--success-rgb: 5, 150, 105;
+	--warning: #d97706;
+	--warning-rgb: 217, 119, 6;
+	--danger: #dc2626;
+	--danger-rgb: 220, 38, 38;
+	--shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="nord"] {
+	--bg: #2e3440;
+	--panel: #272b35;
+	--panel-strong: #3b4252;
+	--input-bg: #20242c;
+	--ink: #eceff4;
+	--muted: #d8dee9;
+	--accent: #88c0d0;
+	--accent-rgb: 136, 192, 208;
+	--accent-2: #81a1c1;
+	--accent-2-rgb: 129, 161, 193;
+	--line: #434c5e;
+	--line-hi: #4c566a;
+	--success: #a3be8c;
+	--success-rgb: 163, 190, 140;
+	--warning: #ebcb8b;
+	--warning-rgb: 235, 203, 139;
+	--danger: #bf616a;
+	--danger-rgb: 191, 97, 106;
+	--shadow: 0 4px 24px rgba(0, 0, 0, 0.30);
+}
+
+[data-theme="gruvbox"] {
+	--bg: #282828;
+	--panel: #1d2021;
+	--panel-strong: #3c3836;
+	--input-bg: #161819;
+	--ink: #ebdbb2;
+	--muted: #d5c4a1;
+	--accent: #fe8019;
+	--accent-rgb: 254, 128, 25;
+	--accent-2: #83a598;
+	--accent-2-rgb: 131, 165, 152;
+	--line: #504945;
+	--line-hi: #665c54;
+	--success: #b8bb26;
+	--success-rgb: 184, 187, 38;
+	--warning: #fabd2f;
+	--warning-rgb: 250, 189, 47;
+	--danger: #fb4934;
+	--danger-rgb: 251, 73, 52;
+	--shadow: 0 4px 24px rgba(0, 0, 0, 0.35);
+}
+
+[data-theme="synthwave"] {
+	--bg: #241b2f;
+	--panel: #1a1326;
+	--panel-strong: #34294f;
+	--input-bg: #120d1c;
+	--ink: #f4eee4;
+	--muted: #cdb6e0;
+	--accent: #ff2e97;
+	--accent-rgb: 255, 46, 151;
+	--accent-2: #00e0ff;
+	--accent-2-rgb: 0, 224, 255;
+	--line: #4d3b6b;
+	--line-hi: #6b4f96;
+	--success: #05ffa1;
+	--success-rgb: 5, 255, 161;
+	--warning: #ffd319;
+	--warning-rgb: 255, 211, 25;
+	--danger: #ff5277;
+	--danger-rgb: 255, 82, 119;
+	--shadow: 0 4px 24px rgba(123, 92, 255, 0.25);
+}
+
 html,
 body {
 	width: 780px;

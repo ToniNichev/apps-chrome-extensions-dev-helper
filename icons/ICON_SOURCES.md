@@ -11,3 +11,15 @@ This extension expects the following PNGs to exist for local loading and Chrome 
 
 - Use **PNG** (not SVG) for best compatibility with the Chrome Web Store pipeline.
 - Keep the artwork high-contrast; small sizes should remain readable.
+
+### Source
+
+Rasterized from swissdev.tools' own favicon
+(`assets/favicon.svg` in the swissdev.tools repo — code brackets + Swiss
+cross on red, `#E63946`) at 512×512, then downscaled to each required
+size. Regenerate with:
+
+```
+qlmanage -t -s 512 -o . assets/favicon.svg   # -> favicon.svg.png
+sips -z <N> <N> favicon.svg.png --out icon<N>.png   # for N in 16 32 48 128
+```

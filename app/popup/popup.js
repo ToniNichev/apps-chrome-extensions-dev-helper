@@ -3,6 +3,7 @@ import { getState, setState } from "../shared/storage.js";
 import { isValidRegex, summarizeValidation, validateMockRule, validateProxyRule, validateRewriteRule, validateScriptRule } from "../shared/validation.js";
 
 const extensionBaseUrl = chrome.runtime.getURL("");
+const THEME_STORAGE_KEY = "sdtTheme";
 let appState = createDefaultState();
 let runtimeState = null;
 let hoverState = {
@@ -14,12 +15,45 @@ initialize().catch(function(error) {
 });
 
 async function initialize() {
+	await applySyncedTheme();
 	appState = await getState();
 	await refreshRuntimeState();
 	wireGlobalEvents();
 	render();
 	window.setInterval(refreshRuntimeStateAndRender, 1000);
 }
+
+/* Mirrors whichever theme swissdev.tools is currently showing — pushed
+   here by assets/dev-helper-relay.js's MutationObserver on the site's own
+   <html data-theme> attribute, via the DEV_HELPER_THEME message the
+   background service worker caches under THEME_STORAGE_KEY (see
+   handleThemeSync() in app/background/service-worker.js). Falls back to
+   the default dark theme if swissdev.tools has never been visited with
+   this extension installed (nothing cached yet). Also live-updates while
+   the popup is open, in case the theme changes on the site mid-session. */
+function applyTheme(theme) {
+	var root = document.documentElement;
+	if (theme && theme !== "dark") {
+		root.setAttribute("data-theme", theme);
+	} else {
+		root.removeAttribute("data-theme");
+	}
+}
+
+function applySyncedTheme() {
+	return new Promise(function(resolve) {
+		chrome.storage.local.get(THEME_STORAGE_KEY, function(result) {
+			applyTheme(result && result[THEME_STORAGE_KEY]);
+			resolve();
+		});
+	});
+}
+
+chrome.storage.onChanged.addListener(function(changes, areaName) {
+	if (areaName === "local" && changes[THEME_STORAGE_KEY]) {
+		applyTheme(changes[THEME_STORAGE_KEY].newValue);
+	}
+});
 
 function wireGlobalEvents() {
 	document.getElementById("tabStrip").addEventListener("click", handleTabClick);
