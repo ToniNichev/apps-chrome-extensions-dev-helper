@@ -24,6 +24,10 @@ const ALLOWED_EXTERNAL_ORIGINS = ["https://swissdev.tools"];
 const THEME_STORAGE_KEY = "sdtTheme";
 const ALLOWED_THEMES = ["dark", "terminal", "light", "nord", "gruvbox", "synthwave"];
 
+const NORMAL_ICON = { "16": "icons/icon16.png", "32": "icons/icon32.png", "48": "icons/icon48.png", "128": "icons/icon128.png" };
+const ACTIVE_ICON = { "16": "icons/icon-active-16.png", "32": "icons/icon-active-32.png", "48": "icons/icon-active-48.png", "128": "icons/icon-active-128.png" };
+let activeProxyRequestCount = 0;
+
 bootstrap();
 
 chrome.runtime.onInstalled.addListener(function() {
@@ -134,22 +138,51 @@ async function handleProxyFetch(message) {
 	const headers = message.headers && typeof message.headers === "object" ? message.headers : {};
 	const body = (method === "GET" || method === "HEAD") ? undefined : message.body;
 
-	const t0 = Date.now();
-	const response = await fetch(url, {
-		method: method,
-		headers: headers,
-		body: body || undefined
-	});
-	const text = await response.text();
+	beginProxyActivity();
+	try {
+		const t0 = Date.now();
+		const response = await fetch(url, {
+			method: method,
+			headers: headers,
+			body: body || undefined
+		});
+		const text = await response.text();
 
-	return {
-		ok: true,
-		status: response.status,
-		statusText: response.statusText,
-		headers: Array.from(response.headers.entries()),
-		body: text,
-		elapsedMs: Date.now() - t0
-	};
+		return {
+			ok: true,
+			status: response.status,
+			statusText: response.statusText,
+			headers: Array.from(response.headers.entries()),
+			body: text,
+			elapsedMs: Date.now() - t0
+		};
+	} finally {
+		endProxyActivity();
+	}
+}
+
+/* Swaps the toolbar icon to a glowing (accent-ringed) variant for as long
+   as at least one relayed fetch is in flight — a visible cue that
+   swissdev.tools is actively using the extension right now, distinct from
+   it just being installed. Counted rather than a plain boolean so
+   overlapping requests (e.g. several tabs, or the HTTP tool firing two
+   requests close together) don't have an earlier finish turn the glow off
+   while a later one is still running; setIcon only actually fires on the
+   0→1 and 1→0 transitions. Errors from setIcon (e.g. a transient timing
+   issue during service-worker suspend/resume) are swallowed — a missed
+   icon update is cosmetic, never worth surfacing as a relay failure. */
+function beginProxyActivity() {
+	activeProxyRequestCount += 1;
+	if (activeProxyRequestCount === 1) {
+		chrome.action.setIcon({ path: ACTIVE_ICON }, function() { void chrome.runtime.lastError; });
+	}
+}
+
+function endProxyActivity() {
+	activeProxyRequestCount = Math.max(0, activeProxyRequestCount - 1);
+	if (activeProxyRequestCount === 0) {
+		chrome.action.setIcon({ path: NORMAL_ICON }, function() { void chrome.runtime.lastError; });
+	}
 }
 
 chrome.webRequest.onBeforeRequest.addListener(function(details) {
