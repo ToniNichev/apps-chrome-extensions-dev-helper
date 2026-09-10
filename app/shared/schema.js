@@ -5,7 +5,7 @@ export const CAPABILITIES = {
 	rewriteRules: "supported",
 	headerOverrides: "supported",
 	proxyRules: "supported",
-	scriptInjection: "partial",
+	scriptInjection: "supported",
 	profiling: "supported",
 	watchdog: "supported"
 };
@@ -93,6 +93,12 @@ function normalizeProxyRule(rule) {
 	};
 }
 
+/* JS-asset injection (assetType: "js") was dropped — MV3 required any such
+   script to be pre-bundled as an extension asset before a rule could
+   reference it, which meant it could never be a "paste a URL, done" rule
+   like the rest; DevTools' own Snippets cover ad-hoc JS better anyway. A
+   pre-existing stored rule with assetType "js" is silently treated as CSS
+   from here on (its source, if not a real stylesheet, just won't apply). */
 function normalizeScriptRule(rule) {
 	const source = rule && typeof rule === "object" ? rule : {};
 
@@ -102,7 +108,6 @@ function normalizeScriptRule(rule) {
 		active: Boolean(source.active),
 		matchUrl: source.matchUrl || "",
 		regexFlags: normalizeRegexFlags(source.regexFlags || ""),
-		assetType: source.assetType || "css",
 		source: source.source || "",
 		injectInto: source.injectInto === "body" ? "body" : "head"
 	};

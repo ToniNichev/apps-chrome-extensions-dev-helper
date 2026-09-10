@@ -15,7 +15,7 @@
 			<button type="button" class="tab-button is-active" data-tab="profiling">Profiling</button>
 			<button type="button" class="tab-button" data-tab="rewrite">Rewrite Rules</button>
 			<button type="button" class="tab-button" data-tab="proxy">Proxy Rules</button>
-			<button type="button" class="tab-button" data-tab="scripts">Script Rules</button>
+			<button type="button" class="tab-button" data-tab="scripts">CSS Rules</button>
 			<button type="button" class="tab-button" data-tab="mock">Mock Rules</button>
 			<button type="button" class="tab-button" data-tab="watchdog">Watchdog</button>
 		</nav>
@@ -88,12 +88,12 @@
 			<section class="panel" data-panel="scripts">
 				<div class="section-head">
 					<div>
-						<h2>Script Rules</h2>
-						<p>CSS URLs work. JavaScript must be bundled as an extension asset before it can be injected.</p>
+						<h2>CSS Rules</h2>
+						<p>Injects a stylesheet into matching pages &mdash; an absolute URL, or a CSS file bundled as an extension asset.</p>
 					</div>
 					<button type="button" class="primary-button" id="addScriptRuleButton">Add Rule</button>
 				</div>
-				<div class="empty-state" id="scriptEmptyState">No script rules yet.</div>
+				<div class="empty-state" id="scriptEmptyState">No CSS rules yet.</div>
 				<div class="rule-list" id="scriptRuleList"></div>
 			</section>
 

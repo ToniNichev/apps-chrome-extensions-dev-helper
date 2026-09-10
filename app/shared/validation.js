@@ -59,15 +59,11 @@ export function validateScriptRule(rule, extensionBaseUrl) {
 	pushRegexIssues(issues, rule.matchUrl, rule.regexFlags, "Match URL regex");
 
 	if (!rule.source) {
-		issues.push("Source is required.");
+		issues.push("CSS URL is required.");
 	}
 
-	if (rule.assetType === "js" && rule.source && !String(rule.source).startsWith(extensionBaseUrl)) {
-		issues.push("Bundled JS Asset must use an extension URL such as " + extensionBaseUrl + "app/injected/example.js");
-	}
-
-	if (rule.assetType === "css" && rule.source && !isLikelyUrl(rule.source) && !String(rule.source).startsWith(extensionBaseUrl)) {
-		issues.push("CSS source should be an absolute URL or an extension asset URL.");
+	if (rule.source && !isLikelyUrl(rule.source) && !String(rule.source).startsWith(extensionBaseUrl)) {
+		issues.push("CSS URL should be an absolute URL or an extension asset URL.");
 	}
 
 	return issues;

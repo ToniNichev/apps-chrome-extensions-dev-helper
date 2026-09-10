@@ -403,16 +403,12 @@ function renderScriptRule(rule) {
 		renderTextField("Name", "name", rule.name),
 		renderRegexFlagsField(rule.regexFlags),
 		renderTextField("Match URL Regex", "matchUrl", rule.matchUrl, "full-span", !isValidRegex(rule.matchUrl, rule.regexFlags)),
-		renderSelectField("Asset Type", "assetType", rule.assetType, [
-			["css", "CSS URL"],
-			["js", "Bundled JS Asset"]
-		]),
 		renderSelectField("Inject Into", "injectInto", rule.injectInto, [
 			["head", "Head"],
 			["body", "Body"]
 		]),
-		renderTextField("Source", "source", rule.source, "full-span"),
-		'<p class="hint full-span">JavaScript must use an extension URL like <code>' + escapeHtml(chrome.runtime.getURL("app/injected/example.js")) + "</code>.</p>",
+		renderTextField("CSS URL", "source", rule.source, "full-span"),
+		'<p class="hint full-span">An absolute URL, or a bundled extension asset URL like <code>' + escapeHtml(chrome.runtime.getURL("app/injected/")) + "your-file.css</code>.</p>",
 		renderRuleIssues(issues),
 		"</div>",
 		"</article>"
@@ -680,7 +676,6 @@ function createScriptRule() {
 		active: true,
 		matchUrl: "",
 		regexFlags: "gi",
-		assetType: "css",
 		source: "",
 		injectInto: "head"
 	};

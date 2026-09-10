@@ -1,17 +1,16 @@
 # SwissDev.tools Dev Helper
 
-A Manifest V3 Chrome extension for profiling network requests and defining rewrite, proxy, mock, script-injection, and watchdog-notification rules while you develop. All configuration and captured data stay local to your device — see [`PRIVACY.md`](./PRIVACY.md). Also includes a relay, scoped only to swissdev.tools, that lets that site's own browser-based tools bypass CORS and mixed-content restrictions.
+A Manifest V3 Chrome extension for profiling network requests and defining rewrite, proxy, mock, CSS-injection, and watchdog-notification rules while you develop. All configuration and captured data stay local to your device — see [`PRIVACY.md`](./PRIVACY.md). Also includes a relay, scoped only to swissdev.tools, that lets that site's own browser-based tools bypass CORS and mixed-content restrictions.
 
 ## App layout
 
 - `manifest.json`: MV3 entrypoints, including the two content scripts (isolated-world `injector.js` and a MAIN-world `mock-interceptor.js`).
 - `app/background/service-worker.js`: runtime state, profiling capture, proxy enforcement, DNR rule sync, and popup/content-script messaging.
 - `app/background/dnr.js`: compiles rewrite rules and header overrides into `declarativeNetRequest` dynamic rules.
-- `app/popup/`: popup UI for profiling, rewrite rules, proxy rules, mock rules, script rules, and watchdog rules.
+- `app/popup/`: popup UI for profiling, rewrite rules, proxy rules, mock rules, CSS rules, and watchdog rules.
 - `app/shared/`: shared schema, storage, and validation helpers used by both the background and the popup.
-- `app/content/injector.js`: applies active script/CSS rules on matching pages, and bridges mock rules into the page.
+- `app/content/injector.js`: applies active CSS rules on matching pages, and bridges mock rules into the page.
 - `app/injected/mock-interceptor.js`: MAIN-world script that intercepts `fetch()` and returns mocked responses for matching rules.
-- `app/injected/example.js`: example bundled JavaScript asset for MV3-safe script-rule injection.
 
 ## Feature status
 
@@ -19,7 +18,7 @@ A Manifest V3 Chrome extension for profiling network requests and defining rewri
 - **Proxy rules**: applies `chrome.proxy.settings` based on the first matching active rule, and clears back to direct when no rule matches (no longer leaves a stale proxy applied after a rule is deactivated).
 - **Rewrite rules & header overrides**: compiled into MV3 dynamic `declarativeNetRequest` rules.
 - **Mock rules**: intercepts a page's own `fetch()` and `XMLHttpRequest` calls and returns a locally-defined response — no backend involved.
-- **Script rules**: CSS URLs work directly; JavaScript must be bundled as an extension asset (MV3 does not allow injecting/evaling remote script).
+- **CSS rules**: injects a stylesheet into matching pages via a `<link>` tag — an absolute URL or a bundled extension asset. (Used to also support bundled-JS injection under an "Asset Type" choice; dropped since MV3's remote-code restriction meant JS could only ever be a pre-bundled extension file, never a paste-a-URL rule like everything else here, and it saw barely any real use.)
 - **Watchdog rules**: matches on URL regex + method + a status filter (`ANY`, an exact code, or a class like `4xx`) against every completed request, independent of whether Profiling is on. A match logs to a capped in-memory list, sets a toolbar badge count, and fires a desktop notification (throttled per-rule to once per 5s).
 
 ## Packaging & Chrome Web Store submission

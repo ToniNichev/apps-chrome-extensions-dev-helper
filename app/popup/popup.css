@@ -907,7 +907,7 @@ textarea {
 }
 
 .rule-card[data-rule-type="script"] .rule-title::before {
-	content: "Script";
+	content: "CSS";
 	background: rgba(var(--success-rgb), 0.15);
 	color: var(--success);
 }

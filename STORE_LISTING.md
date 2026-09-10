@@ -4,7 +4,7 @@ Working notes for the Developer Dashboard fields. Not shipped in the extension p
 
 ## Single purpose
 
-> SwissDev.tools Dev Helper is a web development debugging toolkit: it lets developers see which domains are consuming request time, define rules to rewrite/redirect URLs, override headers, route traffic through a proxy, mock API responses, inject CSS/JS, and get notified the moment a matching request completes (a watchdog rule) — all for pages they are actively developing or testing against. It also includes a small relay, scoped only to swissdev.tools (the free browser-based dev-tool site from the same developer), that lets that site's own tools bypass CORS and mixed-content restrictions when the user is testing against their own local/dev servers.
+> SwissDev.tools Dev Helper is a web development debugging toolkit: it lets developers see which domains are consuming request time, define rules to rewrite/redirect URLs, override headers, route traffic through a proxy, mock API responses, inject CSS, and get notified the moment a matching request completes (a watchdog rule) — all for pages they are actively developing or testing against. It also includes a small relay, scoped only to swissdev.tools (the free browser-based dev-tool site from the same developer), that lets that site's own tools bypass CORS and mixed-content restrictions when the user is testing against their own local/dev servers.
 
 Everything in the extension serves that one purpose (inspecting and locally modifying network behavior for development/debugging). If a reviewer pushes back on "single purpose" because of the number of features, the fallback framing is: all four rule types, profiling, and the swissdev.tools relay are different facets of the same activity — controlling and observing network requests during development — not unrelated features bolted together. If a reviewer questions the swissdev.tools branding on an otherwise general-purpose extension: the extension is built by the same developer as swissdev.tools and works standalone on any site without it — the name and relay are a deliberate cross-promotion between two tools from the same author, not a restriction of scope.
 
@@ -34,7 +34,7 @@ Paste one of these into the corresponding field in the dashboard's Permissions t
 > The extension's core purpose is letting the user apply their own rewrite/proxy/mock/script rules to any site they choose to debug against, rather than a fixed set of domains. Because the target site is user-selected and unpredictable ahead of time (any site a developer might be testing), broad host access is required for the rules to be able to run wherever the user points them.
 
 **Remote code**
-> No — Dev Helper does not execute or fetch any remote code. All JavaScript is bundled in the extension package (including the injected script/mock assets), and Chrome Web Store review covers 100% of the code that runs.
+> No — Dev Helper does not execute or fetch any remote code. All JavaScript is bundled in the extension package (including the mock-interception asset), and Chrome Web Store review covers 100% of the code that runs. (An earlier version let a rule inject a bundled JS asset onto a page; that was dropped for being high-friction and rarely used, so this is now even more straightforwardly true.)
 
 ## Data disclosure (Privacy practices tab)
 
@@ -54,7 +54,7 @@ Paste one of these into the corresponding field in the dashboard's Permissions t
 > - **Rewrite** URLs and override request/response headers, compiled into Chrome's declarativeNetRequest engine.
 > - **Proxy** matching traffic through a server you configure.
 > - **Mock** API responses locally by intercepting fetch() calls — no backend required to test error states, empty states, or unreleased API shapes.
-> - **Inject** CSS or bundled JS assets into matching pages.
+> - **Inject** a CSS stylesheet into matching pages — an absolute URL or a bundled extension asset.
 > - **Watch** for a matching request completing — a webhook landing, an intermittent error — and get a desktop notification the moment it happens, without babysitting the Network tab.
 > - **Profile** which domains are consuming the most cumulative request time.
 >
