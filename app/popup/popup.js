@@ -167,7 +167,7 @@ function renderProfiling() {
 			"<td>" + escapeHtml(String(request.statusCode || "")) + "</td>",
 			"<td>" + escapeHtml(request.type || "") + "</td>",
 			"<td>" + escapeHtml(String(calculateDuration(request))) + "ms</td>",
-			'<td class="url-cell">' + escapeHtml(request.url || "") + "</td>",
+			'<td class="url-cell" title="' + escapeHtml(request.url || "") + '">' + escapeHtml(request.url || "") + "</td>",
 			"</tr>"
 		].join("");
 	}).join("");
@@ -997,19 +997,11 @@ function handleDomainChartHover(event) {
 	const grid = document.getElementById("profileHoverGrid");
 
 	title.textContent = "Domain • " + domain;
-	grid.innerHTML = [
+	grid.innerHTML = renderHoverMetrics([
 		{ label: "Share", value: share + "%" },
 		{ label: "Requests", value: requests },
-		{ label: "Duration", value: duration + "ms" },
-		{ label: "Domain", value: domain }
-	].map(function(item) {
-		return [
-			'<div class="hover-panel-item">',
-			'<span class="hover-panel-label">' + escapeHtml(item.label) + "</span>",
-			'<span class="hover-panel-value">' + escapeHtml(item.value) + "</span>",
-			"</div>"
-		].join("");
-	}).join("");
+		{ label: "Duration", value: duration + "ms" }
+	]);
 
 	panel.classList.remove("is-hidden");
 	positionHoverPanel(event, panel);
@@ -1021,17 +1013,47 @@ function showHoverPanel(event, request) {
 	const grid = document.getElementById("profileHoverGrid");
 
 	title.textContent = buildHoverTitle(request);
-	grid.innerHTML = buildHoverItems(request).map(function(item) {
-		return [
-			'<div class="hover-panel-item">',
-			'<span class="hover-panel-label">' + escapeHtml(item.label) + "</span>",
-			'<span class="hover-panel-value">' + escapeHtml(item.value) + "</span>",
-			"</div>"
-		].join("");
-	}).join("");
+	grid.innerHTML = renderHoverMetrics(buildHoverMetrics(request))
+		+ '<div class="hover-panel-meta">' + escapeHtml(buildHoverMeta(request)) + "</div>"
+		+ renderHoverUrl(request && request.url ? String(request.url) : "");
 
 	panel.classList.remove("is-hidden");
 	positionHoverPanel(event, panel);
+}
+
+/* Shared by request-row and domain-chart hover paths — a plain N-column
+   grid of small labeled stat boxes. Kept separate from the URL/meta
+   markup below since domain-chart hover (handleDomainChartHover) only
+   ever needs this part. */
+function renderHoverMetrics(items) {
+	return '<div class="hover-panel-metrics" style="grid-template-columns: repeat(' + items.length + ', 1fr);">' +
+		items.map(function(item) {
+			return [
+				'<div class="hover-panel-metric">',
+				'<span class="hover-panel-label">' + escapeHtml(item.label) + "</span>",
+				'<span class="hover-panel-value">' + escapeHtml(item.value) + "</span>",
+				"</div>"
+			].join("");
+		}).join("") +
+		"</div>";
+}
+
+/* A URL can run to hundreds of characters (query strings, tokens) — letting
+   it wrap freely, like the rest of this panel's values used to, is what
+   made the panel balloon past the popup's own height on real traffic.
+   -webkit-line-clamp caps it to a predictable 2 lines regardless of length;
+   .hover-panel itself also gets a hard max-height + overflow-y as a second,
+   unconditional safety net (see popup.css). */
+function renderHoverUrl(url) {
+	if (!url) {
+		return "";
+	}
+	return [
+		'<div class="hover-panel-url-block">',
+		'<span class="hover-panel-label">URL</span>',
+		'<div class="hover-panel-url">' + escapeHtml(url) + "</div>",
+		"</div>"
+	].join("");
 }
 
 function positionHoverPanel(event, panel) {
@@ -1066,24 +1088,34 @@ function buildHoverTitle(request) {
 	}
 }
 
-function buildHoverItems(request) {
+/* The 4 numbers worth a glance at a hover — status/timing breakdown. */
+function buildHoverMetrics(request) {
 	const duration = calculateDuration(request);
 	const ttfb = calculateTimeToFirstByte(request);
 	const download = calculateDownloadTime(request);
-	const startedAt = request && request.timeStampStart ? new Date(request.timeStampStart).toLocaleTimeString() : "";
 
 	return [
 		{ label: "Status", value: request && request.statusCode ? String(request.statusCode) : "—" },
-		{ label: "Type", value: request && request.type ? String(request.type) : "—" },
 		{ label: "Duration", value: duration ? String(duration) + "ms" : "—" },
 		{ label: "TTFB", value: ttfb ? String(ttfb) + "ms" : "—" },
-		{ label: "Download", value: download ? String(download) + "ms" : "—" },
-		{ label: "Blocking", value: request && request.blocking ? String(request.blocking) : "—" },
-		{ label: "Tab ID", value: request && typeof request.tabId === "number" ? String(request.tabId) : "—" },
-		{ label: "Request ID", value: request && request.requestId ? String(request.requestId) : "—" },
-		{ label: "Started", value: startedAt || "—" },
-		{ label: "URL", value: request && request.url ? String(request.url) : "—" }
+		{ label: "Download", value: download ? String(download) + "ms" : "—" }
 	];
+}
+
+/* Everything else (type, blocking reason, tab/request IDs, start time) is
+   secondary lookup info rather than at-a-glance profiling data — folded
+   into one compact line instead of 5 more grid boxes, which is what used
+   to push this panel's height well past the popup's own 600px. */
+function buildHoverMeta(request) {
+	const startedAt = request && request.timeStampStart ? new Date(request.timeStampStart).toLocaleTimeString() : null;
+	const tabId = request && typeof request.tabId === "number" ? "Tab " + request.tabId : null;
+
+	return [
+		request && request.type ? String(request.type) : null,
+		request && request.blocking ? "Blocking: " + request.blocking : null,
+		tabId,
+		startedAt
+	].filter(Boolean).join("  ·  ") || "—";
 }
 
 function clamp(value, min, max) {

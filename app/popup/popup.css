@@ -815,12 +815,19 @@ textarea {
 	background: var(--panel-strong);
 }
 
+/* Hard cap on both axes: width so it never crowds the popup's own 780px,
+   max-height + overflow-y so no amount of content (a long URL, a busy
+   meta line) can ever push the panel past the popup's own viewport — the
+   two hover-panel-* rules further down (metrics grid + 2-line URL clamp)
+   are what keep it *usually* far short of that cap, this is the backstop. */
 .hover-panel {
 	position: fixed;
 	z-index: 50;
-	width: 340px;
+	width: 300px;
 	max-width: calc(100vw - 28px);
-	padding: 12px 12px 10px;
+	max-height: calc(100vh - 24px);
+	overflow-y: auto;
+	padding: 10px 12px;
 	border-radius: 8px;
 	background: var(--input-bg);
 	color: var(--ink);
@@ -842,39 +849,71 @@ textarea {
 	word-break: break-word;
 }
 
-.hover-panel-grid {
+/* grid-template-columns is set inline per call (renderHoverMetrics in
+   popup.js) so a 3-item domain-hover and a 4-item request-hover each get
+   evenly-sized columns instead of ragged leftover space. */
+.hover-panel-metrics {
 	display: grid;
-	grid-template-columns: 1fr 1fr;
-	gap: 8px;
-	font-size: 12px;
-	line-height: 1.35;
+	gap: 6px;
+	margin-bottom: 8px;
 }
 
-.hover-panel-item {
-	padding: 8px 9px;
-	border-radius: 12px;
-	background: rgba(205, 214, 244, 0.08);
-	border: 1px solid rgba(205, 214, 244, 0.1);
+.hover-panel-metric {
+	padding: 6px 4px;
+	border-radius: 8px;
+	background: var(--panel-strong);
+	border: 1px solid var(--line);
+	text-align: center;
 }
 
 .hover-panel-label {
 	display: block;
-	font-size: 11px;
-	letter-spacing: 0.08em;
+	font-size: 10px;
+	letter-spacing: 0.06em;
 	text-transform: uppercase;
-	color: rgba(205, 214, 244, 0.7);
-	margin-bottom: 4px;
+	color: var(--muted);
+	margin-bottom: 3px;
 }
 
 .hover-panel-value {
 	display: block;
 	font-weight: 700;
-	color: rgba(205, 214, 244, 0.96);
-	word-break: break-word;
+	font-size: 13px;
+	color: var(--ink);
+}
+
+/* Type, blocking reason, tab id, start time — secondary lookup info folded
+   into one line instead of more grid boxes (see buildHoverMeta in popup.js). */
+.hover-panel-meta {
+	font-size: 11px;
+	color: var(--muted);
+	padding-bottom: 8px;
+	margin-bottom: 8px;
+	border-bottom: 1px solid var(--line);
+}
+
+.hover-panel-url-block .hover-panel-label {
+	margin-bottom: 2px;
+}
+
+/* The fix for "the panel is too big": a URL of any length is clamped to a
+   predictable 2 lines instead of wrapping without limit — see the comment
+   on renderHoverUrl() in popup.js. */
+.hover-panel-url {
+	display: -webkit-box;
+	-webkit-line-clamp: 2;
+	-webkit-box-orient: vertical;
+	overflow: hidden;
+	word-break: break-all;
+	font-family: 'JetBrains Mono', 'SFMono-Regular', Consolas, monospace;
+	font-size: 11px;
+	line-height: 1.4;
+	color: var(--muted);
 }
 
 .profile-table {
 	width: 100%;
+	table-layout: fixed;
 	border-collapse: collapse;
 }
 
@@ -887,14 +926,28 @@ textarea {
 	font-size: 13px;
 }
 
+/* Fixed widths on every column but URL, which take the rest of the table's
+   width — needed for table-layout:fixed (required by url-cell's ellipsis
+   truncation below) to divide space sensibly instead of splitting it
+   evenly across all 5 columns regardless of content. */
+.profile-table th:nth-child(1), .profile-table td:nth-child(1) { width: 64px; }
+.profile-table th:nth-child(2), .profile-table td:nth-child(2) { width: 56px; }
+.profile-table th:nth-child(3), .profile-table td:nth-child(3) { width: 84px; }
+.profile-table th:nth-child(4), .profile-table td:nth-child(4) { width: 76px; }
+
 .profile-table tbody tr:hover td {
 	background: var(--panel-strong);
 }
 
+/* The other fix for "rows are too big": a URL of any length now stays on
+   one line, ellipsized — the full string is still available via this
+   cell's own title attribute (a native tooltip), and via the row's hover
+   panel (see hover-panel-url above). */
 .url-cell {
-	max-width: 420px;
-	word-break: break-word;
-	font-size: 13px;
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	font-size: 12px;
 	font-family: 'JetBrains Mono', 'SFMono-Regular', Consolas, monospace;
 }
 
