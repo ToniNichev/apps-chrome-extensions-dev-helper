@@ -22,7 +22,7 @@ let appliedProxyRuleId = null;
 const EXTERNAL_API_VERSION = 1;
 const ALLOWED_EXTERNAL_ORIGINS = ["https://swissdev.tools"];
 const THEME_STORAGE_KEY = "sdtTheme";
-const ALLOWED_THEMES = ["dark", "terminal", "light", "nord", "gruvbox", "synthwave"];
+const ALLOWED_THEMES = ["dark", "terminal", "light", "nord", "gruvbox", "synthwave", "slate", "solarized-light", "github-light", "one-light"];
 
 const NORMAL_ICON = { "16": "icons/icon16.png", "32": "icons/icon32.png", "48": "icons/icon48.png", "128": "icons/icon128.png" };
 const ACTIVE_ICON = { "16": "icons/icon-active-16.png", "32": "icons/icon-active-32.png", "48": "icons/icon-active-48.png", "128": "icons/icon-active-128.png" };

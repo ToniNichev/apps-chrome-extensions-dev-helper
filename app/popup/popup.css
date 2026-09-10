@@ -152,6 +152,94 @@
 	--shadow: 0 4px 24px rgba(123, 92, 255, 0.25);
 }
 
+[data-theme="slate"] {
+	--bg: #3b3f46;
+	--panel: #34383e;
+	--panel-strong: #454a52;
+	--input-bg: #2c2f35;
+	--ink: #e8eaed;
+	--muted: #bcc1c9;
+	--accent: #7aa2c9;
+	--accent-rgb: 122, 162, 201;
+	--accent-2: #7aa2c9;
+	--accent-2-rgb: 122, 162, 201;
+	--line: #4b5058;
+	--line-hi: #5c626b;
+	--success: #8fbf8f;
+	--success-rgb: 143, 191, 143;
+	--warning: #e0bc7a;
+	--warning-rgb: 224, 188, 122;
+	--danger: #e08a8a;
+	--danger-rgb: 224, 138, 138;
+	--shadow: 0 4px 24px rgba(0, 0, 0, 0.28);
+}
+
+[data-theme="solarized-light"] {
+	--bg: #fdf6e3;
+	--panel: #f7f0dc;
+	--panel-strong: #eee8d5;
+	--input-bg: #fdf6e3;
+	--ink: #073642;
+	--muted: #586e75;
+	--accent: #268bd2;
+	--accent-rgb: 38, 139, 210;
+	--accent-2: #268bd2;
+	--accent-2-rgb: 38, 139, 210;
+	--line: #d3cbb7;
+	--line-hi: #b8ae95;
+	--success: #859900;
+	--success-rgb: 133, 153, 0;
+	--warning: #b58900;
+	--warning-rgb: 181, 137, 0;
+	--danger: #dc322f;
+	--danger-rgb: 220, 50, 47;
+	--shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+}
+
+[data-theme="github-light"] {
+	--bg: #ffffff;
+	--panel: #f6f8fa;
+	--panel-strong: #f6f8fa;
+	--input-bg: #ffffff;
+	--ink: #1f2328;
+	--muted: #57606a;
+	--accent: #0969da;
+	--accent-rgb: 9, 105, 218;
+	--accent-2: #0969da;
+	--accent-2-rgb: 9, 105, 218;
+	--line: #d0d7de;
+	--line-hi: #afb8c1;
+	--success: #1a7f37;
+	--success-rgb: 26, 127, 55;
+	--warning: #9a6700;
+	--warning-rgb: 154, 103, 0;
+	--danger: #cf222e;
+	--danger-rgb: 207, 34, 46;
+	--shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="one-light"] {
+	--bg: #fafafa;
+	--panel: #eaeaeb;
+	--panel-strong: #e5e5e6;
+	--input-bg: #f0f0f1;
+	--ink: #383a42;
+	--muted: #5c5e66;
+	--accent: #4078f2;
+	--accent-rgb: 64, 120, 242;
+	--accent-2: #4078f2;
+	--accent-2-rgb: 64, 120, 242;
+	--line: #d3d3d4;
+	--line-hi: #bcbcbe;
+	--success: #50a14f;
+	--success-rgb: 80, 161, 79;
+	--warning: #c18401;
+	--warning-rgb: 193, 132, 1;
+	--danger: #e45649;
+	--danger-rgb: 228, 86, 73;
+	--shadow: 0 2px 12px rgba(0, 0, 0, 0.07);
+}
+
 html,
 body {
 	width: 780px;
