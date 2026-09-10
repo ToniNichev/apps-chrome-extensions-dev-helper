@@ -15,11 +15,19 @@ let dnrStatus = {
 let capabilityWarnings = {
 	scripts: false
 };
-let compiledProxyMatchers = [];
 let compiledScriptMatchers = [];
 let compiledMockMatchers = [];
 let compiledWatchdogMatchers = [];
-let appliedProxyRuleId = null;
+
+/* Surfaced in the popup's Runtime Health card so a PAC apply failure (e.g.
+   chrome.proxy.settings.set rejecting a malformed config) is visible
+   instead of silently leaving proxying in whatever state it was in before. */
+let proxyStatus = {
+	active: false,
+	ruleCount: 0,
+	lastAppliedAt: null,
+	lastError: null
+};
 
 /* Watchdog match log — same in-memory-only tradeoff as requestsById (see
    the comment on buildRuntimeState): lost on service worker eviction, but
@@ -57,6 +65,7 @@ chrome.storage.onChanged.addListener(function(changes, areaName) {
 
 	cachedState = changes[STORAGE_KEY].newValue || createDefaultState();
 	recompileMatchers(cachedState);
+	applyProxyPacScript(cachedState.proxyRules);
 	syncAndStoreDynamicRules(cachedState).catch(function(error) {
 		console.error("Failed to sync dynamic rules after storage change", error);
 	});
@@ -203,7 +212,6 @@ chrome.webRequest.onBeforeRequest.addListener(function(details) {
 	}
 
 	trackRequestStart(details);
-	applyMatchingProxyRule(details.url);
 }, {
 	urls: ["<all_urls>"]
 });
@@ -274,6 +282,7 @@ chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
 async function bootstrap() {
 	cachedState = await ensureState();
 	recompileMatchers(cachedState);
+	applyProxyPacScript(cachedState.proxyRules);
 	await syncAndStoreDynamicRules(cachedState);
 	// watchdogMatches/matchCount reset to empty on every service worker
 	// restart (in-memory only, like requestsById) — resync the toolbar
@@ -329,6 +338,7 @@ function buildRuntimeState() {
 		state: cachedState,
 		capabilities: CAPABILITIES,
 		dnrStatus: dnrStatus,
+		proxyStatus: proxyStatus,
 		profile: {
 			enabled: cachedState.config.profilingEnabled,
 			requests: requestsById
@@ -416,30 +426,82 @@ function getActiveScriptRulesForUrl(url) {
 	});
 }
 
-function applyMatchingProxyRule(url) {
-	const match = compiledProxyMatchers.find(function(entry) {
-		return entry.matches(url);
-	});
-
-	if (match) {
-		if (appliedProxyRuleId !== match.rule.id) {
-			appliedProxyRuleId = match.rule.id;
-			useProxy(match.rule);
-		}
-		return;
-	}
-
-	if (appliedProxyRuleId !== null) {
-		appliedProxyRuleId = null;
-		chrome.proxy.settings.clear({ scope: "regular" });
-	}
-}
-
 function recompileMatchers(state) {
-	compiledProxyMatchers = compileMatchers(state.proxyRules);
 	compiledScriptMatchers = compileMatchers(state.scriptRules);
 	compiledMockMatchers = compileMatchers(state.mockRules);
 	compiledWatchdogMatchers = compileMatchers(state.watchdogRules);
+}
+
+/* Replaces the old reactive approach (flip chrome.proxy.settings on/off as
+   each request's onBeforeRequest fires) with a single PAC script covering
+   every active rule at once. PAC's FindProxyForURL is evaluated by Chrome's
+   network stack synchronously, per connection, before that connection opens
+   — the actual per-URL granularity a "match this pattern, proxy just that"
+   rule needs, and not something the old per-request settings.set()/clear()
+   toggling could ever reliably deliver (see the git history / commit
+   message for the race this replaced). */
+function applyProxyPacScript(rules) {
+	const activeRules = (rules || []).filter(function(rule) {
+		return rule.active && rule.proxyLocation;
+	});
+
+	if (!activeRules.length) {
+		proxyStatus = { active: false, ruleCount: 0, lastAppliedAt: new Date().toISOString(), lastError: null };
+		chrome.proxy.settings.clear({ scope: "regular" }, function() {
+			void chrome.runtime.lastError;
+		});
+		return;
+	}
+
+	chrome.proxy.settings.set({
+		value: { mode: "pac_script", pacScript: { data: buildProxyPacScript(activeRules) } },
+		scope: "regular"
+	}, function() {
+		proxyStatus = {
+			active: !chrome.runtime.lastError,
+			ruleCount: activeRules.length,
+			lastAppliedAt: new Date().toISOString(),
+			lastError: chrome.runtime.lastError ? chrome.runtime.lastError.message : null
+		};
+	});
+}
+
+/* Each active rule becomes one branch; the first whose pattern matches
+   wins (same "first match wins" semantics the old .find()-based dispatch
+   had), falling through to DIRECT if nothing matches. An empty matchUrl
+   means "match everything" — consistent with compileMatcher() below, used
+   by every other rule type — so it skips the regex test entirely rather
+   than compiling `new RegExp("")` (which would also match everything, but
+   less obviously so on re-reading the generated script). The try/catch
+   per branch means one rule with a pattern that fails to compile can't
+   take down routing for every other rule (or, worse, for all browsing —
+   an uncaught PAC script exception is treated as unusable and can leave
+   Chrome unable to reach the network at all). */
+function buildProxyPacScript(rules) {
+	const lines = ["function FindProxyForURL(url, host) {"];
+
+	rules.forEach(function(rule) {
+		const directive = JSON.stringify(proxyDirectiveFor(rule));
+		if (!rule.matchUrl) {
+			lines.push("  return " + directive + ";");
+			return;
+		}
+
+		const pattern = JSON.stringify(rule.matchUrl);
+		const flags = JSON.stringify(rule.regexFlags || "");
+		lines.push("  try { if (new RegExp(" + pattern + ", " + flags + ").test(url)) return " + directive + "; } catch (e) {}");
+	});
+
+	lines.push("  return \"DIRECT\";");
+	lines.push("}");
+	return lines.join("\n");
+}
+
+function proxyDirectiveFor(rule) {
+	const port = parseInt(rule.proxyPort, 10);
+	const resolvedPort = Number.isNaN(port) ? (rule.proxyScheme === "https" ? 443 : 80) : port;
+	const keyword = rule.proxyScheme === "https" ? "HTTPS" : "PROXY";
+	return keyword + " " + rule.proxyLocation + ":" + resolvedPort;
 }
 
 /* Checks a just-completed request against every active watchdog rule.
@@ -557,48 +619,3 @@ function compileMatcher(pattern, flags) {
 	};
 }
 
-function useProxy(rule) {
-	const port = parseInt(rule.proxyPort, 10);
-	const config = {
-		mode: "",
-		pacScript: {},
-		rules: {}
-	};
-
-	switch (rule.proxyMode) {
-		case "direct":
-			config.mode = "direct";
-			break;
-		case "system":
-			config.mode = "system";
-			config.rules.bypassList = [];
-			break;
-		case "pac":
-			config.mode = "pac_script";
-			config.pacScript.url = rule.proxyLocation;
-			break;
-		case "http":
-			config.mode = "fixed_servers";
-			config.rules.singleProxy = {
-				scheme: "http",
-				host: rule.proxyLocation,
-				port: Number.isNaN(port) ? 80 : port
-			};
-			break;
-		case "https":
-			config.mode = "fixed_servers";
-			config.rules.singleProxy = {
-				scheme: "https",
-				host: rule.proxyLocation,
-				port: Number.isNaN(port) ? 443 : port
-			};
-			break;
-		default:
-			return;
-	}
-
-	chrome.proxy.settings.set({
-		value: config,
-		scope: "regular"
-	});
-}

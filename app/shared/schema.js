@@ -78,6 +78,17 @@ function normalizeRewriteRule(rule) {
 	};
 }
 
+/* proxyMode used to be direct/system/pac/http/https, applied reactively via
+   chrome.proxy.settings.set()/.clear() as each request's onBeforeRequest
+   fired — which could only ever flip one global, browser-wide setting on
+   or off, not actually route just the matching URL through a proxy (see
+   the commit that replaced this: it's now compiled into a single PAC
+   script instead, evaluated by Chrome per-connection). "direct" and
+   "system" have no PAC equivalent and "pac" (point at an external PAC
+   entirely) is superseded by this file generating its own, so the only
+   two proxyScheme values now are how to reach the upstream proxy itself:
+   plain HTTP or a secure (HTTPS) connection to it. A rule stored under
+   the old field name/values normalizes to "http" here. */
 function normalizeProxyRule(rule) {
 	const source = rule && typeof rule === "object" ? rule : {};
 
@@ -87,7 +98,7 @@ function normalizeProxyRule(rule) {
 		active: Boolean(source.active),
 		matchUrl: source.matchUrl || "",
 		regexFlags: normalizeRegexFlags(source.regexFlags || ""),
-		proxyMode: source.proxyMode || "direct",
+		proxyScheme: source.proxyScheme === "https" ? "https" : "http",
 		proxyLocation: source.proxyLocation || "",
 		proxyPort: source.proxyPort || ""
 	};

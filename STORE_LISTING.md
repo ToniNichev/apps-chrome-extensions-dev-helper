@@ -22,7 +22,7 @@ Paste one of these into the corresponding field in the dashboard's Permissions t
 > Used to apply the URL-rewrite and header-override rules the user defines, via Chrome's built-in declarative rule engine, so live traffic can be redirected or have headers modified for testing.
 
 **proxy**
-> Used to apply the proxy server configuration the user defines in the Proxy Rules tab, so they can route their own traffic through a proxy of their choosing for testing.
+> Used to apply a PAC script compiled from the user's Proxy Rules, so requests matching a rule's URL pattern are routed through the proxy server they configured for that rule, while everything else continues direct.
 
 **tabs**
 > Used to identify the active tab and its URL so the extension can determine which of the user's rules apply to that page, and to deliver script/mock rule updates to the correct tab.

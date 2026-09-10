@@ -179,6 +179,7 @@ function renderWatchdogMatches() {
 function renderRuntimeHealth() {
 	const target = document.getElementById("runtimeHealth");
 	const dnrStatus = runtimeState && runtimeState.dnrStatus ? runtimeState.dnrStatus : null;
+	const proxyStatus = runtimeState && runtimeState.proxyStatus ? runtimeState.proxyStatus : null;
 
 	if (!dnrStatus) {
 		target.innerHTML = '<div class="status-list"><div class="status-pill is-error">Runtime state is unavailable.</div></div>';
@@ -188,15 +189,17 @@ function renderRuntimeHealth() {
 	const pills = [
 		"Dynamic rules: " + dnrStatus.ruleCount,
 		"Last sync: " + (dnrStatus.lastSyncedAt ? new Date(dnrStatus.lastSyncedAt).toLocaleTimeString() : "Not yet"),
-		"Skipped rules: " + dnrStatus.skippedRules.length
+		"Skipped rules: " + dnrStatus.skippedRules.length,
+		"Proxy: " + (proxyStatus && proxyStatus.active ? proxyStatus.ruleCount + " active rule(s) via PAC" : "off")
 	];
 
-	if (dnrStatus.lastError) {
-		pills.push("Last error: " + dnrStatus.lastError);
+	const lastErrorText = dnrStatus.lastError || (proxyStatus && proxyStatus.lastError ? "Proxy PAC: " + proxyStatus.lastError : null);
+	if (lastErrorText) {
+		pills.push("Last error: " + lastErrorText);
 	}
 
 	target.innerHTML = '<div class="status-list">' + pills.map(function(text, index) {
-		const isError = index === pills.length - 1 && dnrStatus.lastError;
+		const isError = index === pills.length - 1 && lastErrorText;
 		return '<div class="status-pill ' + (isError ? "is-error" : "") + '">' + escapeHtml(text) + "</div>";
 	}).join("") + renderSkippedRules(dnrStatus.skippedRules) + "</div>";
 }
@@ -378,15 +381,13 @@ function renderProxyRule(rule) {
 		renderTextField("Name", "name", rule.name),
 		renderRegexFlagsField(rule.regexFlags),
 		renderTextField("Match URL Regex", "matchUrl", rule.matchUrl, "full-span", !isValidRegex(rule.matchUrl, rule.regexFlags)),
-		renderSelectField("Proxy Mode", "proxyMode", rule.proxyMode, [
-			["direct", "Direct"],
-			["system", "System Proxy"],
-			["pac", "PAC URL"],
-			["http", "HTTP Proxy"],
-			["https", "HTTPS Proxy"]
+		renderSelectField("Reach Proxy Via", "proxyScheme", rule.proxyScheme, [
+			["http", "Plain HTTP"],
+			["https", "Secure (HTTPS)"]
 		]),
-		renderTextField("Proxy Location", "proxyLocation", rule.proxyLocation),
+		renderTextField("Proxy Host", "proxyLocation", rule.proxyLocation),
 		renderTextField("Proxy Port", "proxyPort", rule.proxyPort),
+		'<p class="hint full-span">Compiled into one PAC script covering every active Proxy rule, evaluated by Chrome per-connection — only requests matching this rule\'s pattern go through this proxy; everything else goes direct. An empty Match URL Regex matches every request. If multiple active rules could match the same URL, the first one (in the order shown here) wins.</p>',
 		renderRuleIssues(issues),
 		"</div>",
 		"</article>"
@@ -663,7 +664,7 @@ function createProxyRule() {
 		active: true,
 		matchUrl: "",
 		regexFlags: "gi",
-		proxyMode: "direct",
+		proxyScheme: "http",
 		proxyLocation: "",
 		proxyPort: ""
 	};

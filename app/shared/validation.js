@@ -38,15 +38,11 @@ export function validateProxyRule(rule) {
 
 	pushRegexIssues(issues, rule.matchUrl, rule.regexFlags, "Match URL regex");
 
-	if ((rule.proxyMode === "http" || rule.proxyMode === "https") && !rule.proxyLocation) {
-		issues.push("Proxy location is required for HTTP and HTTPS proxy modes.");
+	if (!rule.proxyLocation) {
+		issues.push("Proxy location is required.");
 	}
 
-	if (rule.proxyMode === "pac" && !isLikelyUrl(rule.proxyLocation)) {
-		issues.push("PAC mode expects a valid URL in Proxy Location.");
-	}
-
-	if ((rule.proxyMode === "http" || rule.proxyMode === "https") && rule.proxyPort && !isValidPort(rule.proxyPort)) {
+	if (rule.proxyPort && !isValidPort(rule.proxyPort)) {
 		issues.push("Proxy port must be a number between 1 and 65535.");
 	}
 
