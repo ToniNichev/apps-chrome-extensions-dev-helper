@@ -166,7 +166,7 @@ function renderProfiling() {
 			"<td>" + escapeHtml(request.method || "") + "</td>",
 			"<td>" + escapeHtml(String(request.statusCode || "")) + "</td>",
 			"<td>" + escapeHtml(request.type || "") + "</td>",
-			"<td>" + escapeHtml(String(calculateDuration(request))) + "ms</td>",
+			"<td>" + escapeHtml(formatMs(calculateDuration(request))) + "</td>",
 			'<td class="url-cell" title="' + escapeHtml(request.url || "") + '">' + escapeHtml(request.url || "") + "</td>",
 			"</tr>"
 		].join("");
@@ -793,9 +793,18 @@ function statCard(label, value) {
 	].join("");
 }
 
+/* These three return null (not 0) when the timestamps needed aren't
+   captured yet/at all — distinct from a genuine 0ms measurement, which is
+   common for Download in particular (a small response's whole body often
+   arrives in the same read as its headers). Callers that do arithmetic on
+   the result (sums, comparisons, Math.max) are unaffected: null coerces to
+   0 in numeric context. Callers that DISPLAY the result must check
+   `!== null` rather than truthiness — see formatMs() below — since a
+   truthy check would hide a real "0ms" the same way this whole comment
+   exists to stop happening again. */
 function calculateDuration(request) {
 	if (!request.timeStampStart || !request.timeStampEnd) {
-		return 0;
+		return null;
 	}
 
 	return Math.max(0, Math.round(request.timeStampEnd - request.timeStampStart));
@@ -803,7 +812,7 @@ function calculateDuration(request) {
 
 function calculateTimeToFirstByte(request) {
 	if (!request.timeStampStart || !request.timeStampFirstByte) {
-		return 0;
+		return null;
 	}
 
 	return Math.max(0, Math.round(request.timeStampFirstByte - request.timeStampStart));
@@ -811,7 +820,7 @@ function calculateTimeToFirstByte(request) {
 
 function calculateDownloadTime(request) {
 	if (!request.timeStampFirstByte || !request.timeStampEnd) {
-		return 0;
+		return null;
 	}
 
 	return Math.max(0, Math.round(request.timeStampEnd - request.timeStampFirstByte));
@@ -1096,10 +1105,18 @@ function buildHoverMetrics(request) {
 
 	return [
 		{ label: "Status", value: request && request.statusCode ? String(request.statusCode) : "—" },
-		{ label: "Duration", value: duration ? String(duration) + "ms" : "—" },
-		{ label: "TTFB", value: ttfb ? String(ttfb) + "ms" : "—" },
-		{ label: "Download", value: download ? String(download) + "ms" : "—" }
+		{ label: "Duration", value: formatMs(duration) },
+		{ label: "TTFB", value: formatMs(ttfb) },
+		{ label: "Download", value: formatMs(download) }
 	];
+}
+
+/* null means "not captured" → "—"; any number (0 included — see the
+   comment on calculateDuration/TimeToFirstByte/DownloadTime above) is a
+   real measurement and must display as such, not get swallowed by a
+   truthiness check. */
+function formatMs(value) {
+	return value === null || value === undefined ? "—" : String(value) + "ms";
 }
 
 /* Everything else (type, blocking reason, tab/request IDs, start time) is
