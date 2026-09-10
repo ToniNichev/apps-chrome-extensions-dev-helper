@@ -17,6 +17,7 @@
 			<button type="button" class="tab-button" data-tab="proxy">Proxy Rules</button>
 			<button type="button" class="tab-button" data-tab="scripts">Script Rules</button>
 			<button type="button" class="tab-button" data-tab="mock">Mock Rules</button>
+			<button type="button" class="tab-button" data-tab="watchdog">Watchdog</button>
 		</nav>
 
 		<main class="panel-stack">
@@ -106,6 +107,26 @@
 				</div>
 				<div class="empty-state" id="mockEmptyState">No mock rules yet.</div>
 				<div class="rule-list" id="mockRuleList"></div>
+			</section>
+
+			<section class="panel" data-panel="watchdog">
+				<div class="section-head">
+					<div>
+						<h2>Watchdog</h2>
+						<p>Get notified the moment a matching request completes &mdash; a webhook landing, an intermittent error, anything you'd otherwise have to babysit the Network tab for.</p>
+					</div>
+					<button type="button" class="primary-button" id="addWatchdogRuleButton">Add Rule</button>
+				</div>
+				<div class="watchdog-matches-card">
+					<div class="watchdog-matches-head">
+						<h3>Recent Matches</h3>
+						<button type="button" class="secondary-button" id="clearWatchdogMatchesButton">Clear</button>
+					</div>
+					<div class="empty-state" id="watchdogMatchEmpty">No matches yet.</div>
+					<div class="watchdog-match-list" id="watchdogMatchList"></div>
+				</div>
+				<div class="empty-state" id="watchdogEmptyState">No watchdog rules yet.</div>
+				<div class="rule-list" id="watchdogRuleList"></div>
 			</section>
 		</main>
 

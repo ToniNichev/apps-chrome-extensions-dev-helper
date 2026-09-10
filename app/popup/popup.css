@@ -697,6 +697,75 @@ textarea {
 	text-align: right;
 }
 
+.watchdog-matches-card {
+	margin-bottom: 14px;
+	padding: 16px;
+	border-radius: var(--radius);
+	background: var(--panel-strong);
+	border: 1px solid var(--line);
+}
+
+.watchdog-matches-head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	margin-bottom: 12px;
+}
+
+.watchdog-matches-head h3 {
+	margin: 0;
+	font-size: 15px;
+	text-transform: uppercase;
+	letter-spacing: 0.06em;
+	color: var(--muted);
+}
+
+.watchdog-match-list {
+	display: grid;
+	gap: 8px;
+	max-height: 220px;
+	overflow-y: auto;
+}
+
+.watchdog-match-row {
+	display: grid;
+	grid-template-columns: auto auto auto 1fr;
+	align-items: center;
+	gap: 10px;
+	padding: 8px 10px;
+	border-radius: 8px;
+	background: rgba(var(--accent-2-rgb), 0.06);
+	font-size: 12px;
+}
+
+.watchdog-match-time {
+	color: var(--muted);
+	font-variant-numeric: tabular-nums;
+}
+
+.watchdog-match-rule {
+	font-weight: 700;
+}
+
+.watchdog-match-detail {
+	color: var(--accent-2);
+	font-family: 'JetBrains Mono', 'SFMono-Regular', Consolas, monospace;
+	white-space: nowrap;
+}
+
+.watchdog-match-url {
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	color: var(--muted);
+	font-family: 'JetBrains Mono', 'SFMono-Regular', Consolas, monospace;
+}
+
+.rule-card[data-rule-type="watchdog"] {
+	border-left-color: var(--danger);
+}
+
 /* max-height + overflow-y is a hard backstop so this can never exceed the
    popup's own viewport, whatever ends up inside it. */
 .hover-panel {
@@ -847,6 +916,12 @@ textarea {
 	content: "Mock";
 	background: rgba(var(--warning-rgb), 0.15);
 	color: var(--warning);
+}
+
+.rule-card[data-rule-type="watchdog"] .rule-title::before {
+	content: "Watchdog";
+	background: rgba(var(--danger-rgb), 0.15);
+	color: var(--danger);
 }
 
 .rule-grid {

@@ -73,6 +73,48 @@ export function validateScriptRule(rule, extensionBaseUrl) {
 	return issues;
 }
 
+/* Shared with service-worker.js's watchdog-match check, so the UI's
+   validation and the runtime's actual matching can never disagree about
+   what a status filter string means. */
+export function isValidStatusFilter(value) {
+	const normalized = String(value || "").trim();
+	if (!normalized || normalized.toUpperCase() === "ANY") {
+		return true;
+	}
+	if (/^\d{3}$/.test(normalized)) {
+		const code = parseInt(normalized, 10);
+		return code >= 100 && code <= 599;
+	}
+	return /^[1-5]xx$/i.test(normalized);
+}
+
+export function statusFilterMatches(filter, statusCode) {
+	const normalized = String(filter || "").trim();
+	if (!normalized || normalized.toUpperCase() === "ANY") {
+		return true;
+	}
+	if (/^\d{3}$/.test(normalized)) {
+		return String(statusCode) === normalized;
+	}
+	const classMatch = /^([1-5])xx$/i.exec(normalized);
+	if (classMatch) {
+		return String(statusCode).charAt(0) === classMatch[1];
+	}
+	return false;
+}
+
+export function validateWatchdogRule(rule) {
+	const issues = [];
+
+	pushRegexIssues(issues, rule.matchUrl, rule.regexFlags, "Match URL regex");
+
+	if (!isValidStatusFilter(rule.status)) {
+		issues.push("Status filter must be ANY, an exact code (e.g. 404), or a class like 4xx.");
+	}
+
+	return issues;
+}
+
 export function validateMockRule(rule) {
 	const issues = [];
 
@@ -102,13 +144,15 @@ export function summarizeValidation(state, extensionBaseUrl) {
 		return validateScriptRule(rule, extensionBaseUrl);
 	});
 	const mockIssues = flattenIssues(state.mockRules || [], validateMockRule);
+	const watchdogIssues = flattenIssues(state.watchdogRules || [], validateWatchdogRule);
 
 	return {
 		rewriteIssues: rewriteIssues,
 		proxyIssues: proxyIssues,
 		scriptIssues: scriptIssues,
 		mockIssues: mockIssues,
-		totalIssues: rewriteIssues.length + proxyIssues.length + scriptIssues.length + mockIssues.length
+		watchdogIssues: watchdogIssues,
+		totalIssues: rewriteIssues.length + proxyIssues.length + scriptIssues.length + mockIssues.length + watchdogIssues.length
 	};
 }
 

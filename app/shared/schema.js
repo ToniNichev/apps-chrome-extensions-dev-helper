@@ -6,7 +6,8 @@ export const CAPABILITIES = {
 	headerOverrides: "supported",
 	proxyRules: "supported",
 	scriptInjection: "partial",
-	profiling: "supported"
+	profiling: "supported",
+	watchdog: "supported"
 };
 
 export function createDefaultState() {
@@ -23,7 +24,8 @@ export function createDefaultState() {
 		rewriteRules: [],
 		proxyRules: [],
 		scriptRules: [],
-		mockRules: []
+		mockRules: [],
+		watchdogRules: []
 	};
 }
 
@@ -44,7 +46,8 @@ export function normalizeState(candidate) {
 		rewriteRules: normalizeRuleArray(value.rewriteRules, normalizeRewriteRule),
 		proxyRules: normalizeRuleArray(value.proxyRules, normalizeProxyRule),
 		scriptRules: normalizeRuleArray(value.scriptRules, normalizeScriptRule),
-		mockRules: normalizeRuleArray(value.mockRules, normalizeMockRule)
+		mockRules: normalizeRuleArray(value.mockRules, normalizeMockRule),
+		watchdogRules: normalizeRuleArray(value.watchdogRules, normalizeWatchdogRule)
 	};
 }
 
@@ -118,6 +121,20 @@ function normalizeMockRule(rule) {
 		status: source.status || "200",
 		responseHeaders: source.responseHeaders || "",
 		responseBody: source.responseBody || ""
+	};
+}
+
+function normalizeWatchdogRule(rule) {
+	const source = rule && typeof rule === "object" ? rule : {};
+
+	return {
+		id: source.id || createId("watchdog"),
+		name: source.name || "",
+		active: Boolean(source.active),
+		matchUrl: source.matchUrl || "",
+		regexFlags: normalizeRegexFlags(source.regexFlags || ""),
+		method: source.method || "ANY",
+		status: source.status || "ANY"
 	};
 }
 

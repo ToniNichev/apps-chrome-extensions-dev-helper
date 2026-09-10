@@ -1,6 +1,6 @@
 import { createDefaultState, createId } from "../shared/schema.js";
 import { getState, setState } from "../shared/storage.js";
-import { isValidRegex, summarizeValidation, validateMockRule, validateProxyRule, validateRewriteRule, validateScriptRule } from "../shared/validation.js";
+import { isValidRegex, isValidStatusFilter, summarizeValidation, validateMockRule, validateProxyRule, validateRewriteRule, validateScriptRule, validateWatchdogRule } from "../shared/validation.js";
 
 const extensionBaseUrl = chrome.runtime.getURL("");
 const THEME_STORAGE_KEY = "sdtTheme";
@@ -74,6 +74,11 @@ function wireGlobalEvents() {
 		appState.mockRules.push(createMockRule());
 		saveAndRender();
 	});
+	document.getElementById("addWatchdogRuleButton").addEventListener("click", function() {
+		appState.watchdogRules.push(createWatchdogRule());
+		saveAndRender();
+	});
+	document.getElementById("clearWatchdogMatchesButton").addEventListener("click", handleWatchdogMatchesClear);
 }
 
 function handleTabClick(event) {
@@ -103,6 +108,12 @@ async function handleProfileClear() {
 	renderProfiling();
 }
 
+async function handleWatchdogMatchesClear() {
+	await sendRuntimeMessage({ type: "RUNTIME_CLEAR_WATCHDOG_MATCHES" });
+	await refreshRuntimeState();
+	renderWatchdogMatches();
+}
+
 function render() {
 	renderTabs();
 	renderProfiling();
@@ -112,6 +123,8 @@ function render() {
 	renderProxyRules();
 	renderScriptRules();
 	renderMockRules();
+	renderWatchdogRules();
+	renderWatchdogMatches();
 }
 
 function renderTabs() {
@@ -136,6 +149,31 @@ function renderProfiling() {
 	profilingPanel.classList.toggle("is-recording", profile.enabled);
 
 	renderDomainChart(requestList);
+}
+
+function renderWatchdogMatches() {
+	const watchdog = runtimeState && runtimeState.watchdog ? runtimeState.watchdog : { matches: [] };
+	const emptyState = document.getElementById("watchdogMatchEmpty");
+	const list = document.getElementById("watchdogMatchList");
+
+	if (!watchdog.matches.length) {
+		emptyState.classList.remove("is-hidden");
+		list.innerHTML = "";
+		return;
+	}
+
+	emptyState.classList.add("is-hidden");
+	list.innerHTML = watchdog.matches.map(function(match) {
+		const time = match.timeStamp ? new Date(match.timeStamp).toLocaleTimeString() : "";
+		return [
+			'<div class="watchdog-match-row">',
+			'<span class="watchdog-match-time">' + escapeHtml(time) + "</span>",
+			'<span class="watchdog-match-rule">' + escapeHtml(match.ruleName) + "</span>",
+			'<span class="watchdog-match-detail">' + escapeHtml(match.method || "") + " " + escapeHtml(String(match.statusCode || "")) + "</span>",
+			'<span class="watchdog-match-url" title="' + escapeHtml(match.url || "") + '">' + escapeHtml(match.url || "") + "</span>",
+			"</div>"
+		].join("");
+	}).join("");
 }
 
 function renderRuntimeHealth() {
@@ -177,6 +215,7 @@ function renderValidationSummary() {
 	appendIssueItems(items, "Proxy", validation.proxyIssues);
 	appendIssueItems(items, "Script", validation.scriptIssues);
 	appendIssueItems(items, "Mock", validation.mockIssues);
+	appendIssueItems(items, "Watchdog", validation.watchdogIssues);
 
 	target.innerHTML = '<div class="issue-list">' + items.map(function(item) {
 		return '<div class="issue-pill is-warning">' + escapeHtml(item) + "</div>";
@@ -281,6 +320,15 @@ function renderMockRules() {
 		containerId: "mockRuleList",
 		rules: appState.mockRules,
 		renderRule: renderMockRule
+	});
+}
+
+function renderWatchdogRules() {
+	renderRuleSection({
+		emptyId: "watchdogEmptyState",
+		containerId: "watchdogRuleList",
+		rules: appState.watchdogRules,
+		renderRule: renderWatchdogRule
 	});
 }
 
@@ -393,6 +441,32 @@ function renderMockRule(rule) {
 		renderTextareaField("Response Headers", "responseHeaders", rule.responseHeaders),
 		renderTextareaField("Response Body", "responseBody", rule.responseBody),
 		'<p class="hint full-span">Set a <code>content-type</code> line in Response Headers (e.g. <code>content-type: application/json</code>) to control how the body is interpreted. Mocking intercepts the page’s own <code>fetch()</code> calls directly; it does not use declarativeNetRequest.</p>',
+		renderRuleIssues(issues),
+		"</div>",
+		"</article>"
+	].join("");
+}
+
+function renderWatchdogRule(rule) {
+	const issues = validateWatchdogRule(rule);
+
+	return [
+		'<article class="rule-card" data-rule-type="watchdog" data-rule-id="' + escapeHtml(rule.id) + '">',
+		renderRuleHead(rule),
+		'<div class="rule-grid">',
+		renderTextField("Name", "name", rule.name),
+		renderRegexFlagsField(rule.regexFlags),
+		renderTextField("Match URL Regex", "matchUrl", rule.matchUrl, "full-span", !isValidRegex(rule.matchUrl, rule.regexFlags)),
+		renderSelectField("Method", "method", rule.method, [
+			["ANY", "Any"],
+			["GET", "GET"],
+			["POST", "POST"],
+			["PUT", "PUT"],
+			["PATCH", "PATCH"],
+			["DELETE", "DELETE"]
+		]),
+		renderTextField("Status Filter", "status", rule.status, "", !isValidStatusFilter(rule.status)),
+		'<p class="hint full-span">Status Filter accepts <code>ANY</code>, an exact code like <code>404</code>, or a class like <code>4xx</code>/<code>5xx</code>. A match fires a desktop notification (throttled to once per 5s per rule) and a toolbar badge count, whether or not Profiling is turned on.</p>',
 		renderRuleIssues(issues),
 		"</div>",
 		"</article>"
@@ -519,6 +593,8 @@ function getRuleCollection(type) {
 			return appState.scriptRules;
 		case "mock":
 			return appState.mockRules;
+		case "watchdog":
+			return appState.watchdogRules;
 		default:
 			return [];
 	}
@@ -537,6 +613,9 @@ function assignRuleCollection(type, value) {
 			break;
 		case "mock":
 			appState.mockRules = value;
+			break;
+		case "watchdog":
+			appState.watchdogRules = value;
 			break;
 	}
 }
@@ -562,6 +641,9 @@ async function refreshRuntimeStateAndRender() {
 	if (appState.ui.activeTab === "profiling") {
 		renderProfiling();
 		renderRuntimeHealth();
+	}
+	if (appState.ui.activeTab === "watchdog") {
+		renderWatchdogMatches();
 	}
 }
 
@@ -615,6 +697,18 @@ function createMockRule() {
 		status: "200",
 		responseHeaders: "content-type: application/json",
 		responseBody: "{}"
+	};
+}
+
+function createWatchdogRule() {
+	return {
+		id: createId("watchdog"),
+		name: "",
+		active: true,
+		matchUrl: "",
+		regexFlags: "gi",
+		method: "ANY",
+		status: "ANY"
 	};
 }
 

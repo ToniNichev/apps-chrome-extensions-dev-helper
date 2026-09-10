@@ -1,6 +1,7 @@
 import { CAPABILITIES, STORAGE_KEY, createDefaultState } from "../shared/schema.js";
 import { syncDynamicRules } from "./dnr.js";
 import { ensureState, getState, setState } from "../shared/storage.js";
+import { statusFilterMatches } from "../shared/validation.js";
 
 let cachedState = createDefaultState();
 let requestsById = {};
@@ -17,7 +18,18 @@ let capabilityWarnings = {
 let compiledProxyMatchers = [];
 let compiledScriptMatchers = [];
 let compiledMockMatchers = [];
+let compiledWatchdogMatchers = [];
 let appliedProxyRuleId = null;
+
+/* Watchdog match log — same in-memory-only tradeoff as requestsById (see
+   the comment on buildRuntimeState): lost on service worker eviction, but
+   this is a "did something notable just happen" glance, not a durable
+   record. Capped like requestsById to bound memory. */
+const WATCHDOG_MAX_MATCHES = 50;
+let watchdogMatches = [];
+let watchdogMatchCount = 0;
+const watchdogLastFiredAt = new Map(); // rule id -> timestamp, for the per-rule notification cooldown below
+const WATCHDOG_NOTIFY_COOLDOWN_MS = 5000;
 
 const EXTERNAL_API_VERSION = 1;
 const ALLOWED_EXTERNAL_ORIGINS = ["https://swissdev.tools"];
@@ -225,6 +237,19 @@ chrome.webRequest.onCompleted.addListener(function(details) {
 	urls: ["<all_urls>"]
 });
 
+/* Deliberately its own listener, not folded into the profiling one above —
+   watchdog alerts should fire whether or not Profiling capture is turned
+   on; they're a separate feature that happens to also read webRequest. */
+chrome.webRequest.onCompleted.addListener(function(details) {
+	if (details.tabId === -1) {
+		return;
+	}
+
+	checkWatchdogRules(details);
+}, {
+	urls: ["<all_urls>"]
+});
+
 chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
 	if (changeInfo.status !== "complete" || tabId === -1) {
 		return;
@@ -250,6 +275,11 @@ async function bootstrap() {
 	cachedState = await ensureState();
 	recompileMatchers(cachedState);
 	await syncAndStoreDynamicRules(cachedState);
+	// watchdogMatches/matchCount reset to empty on every service worker
+	// restart (in-memory only, like requestsById) — resync the toolbar
+	// badge so it doesn't keep showing a stale count from before the
+	// restart when nothing has actually matched yet this time around.
+	updateWatchdogBadge();
 }
 
 async function handleMessage(message) {
@@ -266,6 +296,15 @@ async function handleMessage(message) {
 		case "RUNTIME_CLEAR_PROFILE":
 			requestsById = {};
 			lastRequestId = "";
+			return {
+				ok: true,
+				data: buildRuntimeState()
+			};
+
+		case "RUNTIME_CLEAR_WATCHDOG_MATCHES":
+			watchdogMatches = [];
+			watchdogMatchCount = 0;
+			updateWatchdogBadge();
 			return {
 				ok: true,
 				data: buildRuntimeState()
@@ -293,6 +332,10 @@ function buildRuntimeState() {
 		profile: {
 			enabled: cachedState.config.profilingEnabled,
 			requests: requestsById
+		},
+		watchdog: {
+			matches: watchdogMatches,
+			matchCount: watchdogMatchCount
 		}
 	};
 }
@@ -396,6 +439,70 @@ function recompileMatchers(state) {
 	compiledProxyMatchers = compileMatchers(state.proxyRules);
 	compiledScriptMatchers = compileMatchers(state.scriptRules);
 	compiledMockMatchers = compileMatchers(state.mockRules);
+	compiledWatchdogMatchers = compileMatchers(state.watchdogRules);
+}
+
+/* Checks a just-completed request against every active watchdog rule.
+   Independent of compileMatchers()'s URL/active filtering, method and
+   status still need checking per rule since compileMatchers only compiles
+   the URL regex — see compileMatcher() below. */
+function checkWatchdogRules(details) {
+	compiledWatchdogMatchers.filter(function(entry) {
+		return entry.matches(details.url)
+			&& (entry.rule.method === "ANY" || entry.rule.method === details.method)
+			&& statusFilterMatches(entry.rule.status, details.statusCode);
+	}).forEach(function(entry) {
+		recordWatchdogMatch(entry.rule, details);
+	});
+}
+
+let watchdogMatchSequence = 0;
+
+function recordWatchdogMatch(rule, details) {
+	watchdogMatchSequence += 1;
+	const match = {
+		id: Date.now() + "_" + watchdogMatchSequence,
+		ruleId: rule.id,
+		ruleName: rule.name || "Untitled rule",
+		method: details.method,
+		statusCode: details.statusCode,
+		url: details.url,
+		timeStamp: details.timeStamp
+	};
+
+	watchdogMatches.unshift(match);
+	if (watchdogMatches.length > WATCHDOG_MAX_MATCHES) {
+		watchdogMatches.length = WATCHDOG_MAX_MATCHES;
+	}
+	watchdogMatchCount += 1;
+	updateWatchdogBadge();
+
+	// Per-rule cooldown so a chatty endpoint (e.g. a rule matching a polling
+	// request) can't flood notifications — it still logs every match above,
+	// just doesn't necessarily alert for every single one.
+	const now = Date.now();
+	const lastFired = watchdogLastFiredAt.get(rule.id) || 0;
+	if (now - lastFired >= WATCHDOG_NOTIFY_COOLDOWN_MS) {
+		watchdogLastFiredAt.set(rule.id, now);
+		fireWatchdogNotification(match);
+	}
+}
+
+function updateWatchdogBadge() {
+	chrome.action.setBadgeBackgroundColor({ color: "#f38ba8" });
+	chrome.action.setBadgeText({ text: watchdogMatchCount > 0 ? String(Math.min(watchdogMatchCount, 99)) : "" });
+}
+
+function fireWatchdogNotification(match) {
+	chrome.notifications.create("watchdog_" + match.id, {
+		type: "basic",
+		iconUrl: "icons/icon128.png",
+		title: "Watchdog: " + match.ruleName,
+		message: match.method + " " + match.statusCode + " — " + match.url,
+		priority: 1
+	}, function() {
+		void chrome.runtime.lastError;
+	});
 }
 
 function getActiveMockRulesForUrl(url) {
