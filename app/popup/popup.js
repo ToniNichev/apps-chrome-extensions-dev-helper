@@ -6,9 +6,6 @@ const extensionBaseUrl = chrome.runtime.getURL("");
 const THEME_STORAGE_KEY = "sdtTheme";
 let appState = createDefaultState();
 let runtimeState = null;
-let hoverState = {
-	activeRequestId: null
-};
 
 initialize().catch(function(error) {
 	console.error("Failed to initialize popup", error);
@@ -59,10 +56,6 @@ function wireGlobalEvents() {
 	document.getElementById("tabStrip").addEventListener("click", handleTabClick);
 	document.getElementById("toggleProfilingButton").addEventListener("click", handleProfilingToggle);
 	document.getElementById("clearProfileButton").addEventListener("click", handleProfileClear);
-	document.getElementById("profileTableBody").addEventListener("mousemove", handleProfileTableHover);
-	document.getElementById("profileTableBody").addEventListener("mouseleave", hideHoverPanel);
-	document.getElementById("waterfallWrap").addEventListener("mousemove", handleWaterfallHover);
-	document.getElementById("waterfallWrap").addEventListener("mouseleave", hideHoverPanel);
 	document.getElementById("domainChart").addEventListener("mousemove", handleDomainChartHover);
 	document.getElementById("domainChart").addEventListener("mouseleave", hideHoverPanel);
 	document.getElementById("addRewriteRuleButton").addEventListener("click", function() {
@@ -142,43 +135,7 @@ function renderProfiling() {
 	toggleButton.classList.toggle("is-recording", profile.enabled);
 	profilingPanel.classList.toggle("is-recording", profile.enabled);
 
-	const completedRequests = requestList.filter(function(request) {
-		return request.timeStampEnd;
-	});
-	const averageDuration = completedRequests.length
-		? Math.round(completedRequests.reduce(function(sum, request) {
-			return sum + calculateDuration(request);
-		}, 0) / completedRequests.length)
-		: 0;
-
-	document.getElementById("profileStats").innerHTML = [
-		statCard("Captured", String(requestList.length)),
-		statCard("Completed", String(completedRequests.length)),
-		statCard("Average ms", String(averageDuration)),
-		statCard("Active", profile.enabled ? "Yes" : "No")
-	].join("");
-
-	document.getElementById("profileTableBody").innerHTML = requestList.slice(0, 100).map(function(request) {
-		const requestId = request && request.requestId ? String(request.requestId) : "";
-		const title = buildHoverTitle(request);
-		return [
-			'<tr data-request-id="' + escapeHtml(requestId) + '" title="' + escapeHtml(title) + '">',
-			"<td>" + escapeHtml(request.method || "") + "</td>",
-			"<td>" + escapeHtml(String(request.statusCode || "")) + "</td>",
-			"<td>" + escapeHtml(request.type || "") + "</td>",
-			"<td>" + escapeHtml(formatMs(calculateDuration(request))) + "</td>",
-			'<td class="url-cell" title="' + escapeHtml(request.url || "") + '">' + escapeHtml(request.url || "") + "</td>",
-			"</tr>"
-		].join("");
-	}).join("");
-
-	renderWaterfallChart(requestList);
 	renderDomainChart(requestList);
-
-	// If the hovered request is no longer present, hide the panel.
-	if (hoverState.activeRequestId && !(profile.requests && profile.requests[hoverState.activeRequestId])) {
-		hideHoverPanel();
-	}
 }
 
 function renderRuntimeHealth() {
@@ -224,109 +181,6 @@ function renderValidationSummary() {
 	target.innerHTML = '<div class="issue-list">' + items.map(function(item) {
 		return '<div class="issue-pill is-warning">' + escapeHtml(item) + "</div>";
 	}).join("") + "</div>";
-}
-
-function renderWaterfallChart(requestList) {
-	const chart = document.getElementById("waterfallChart");
-	const emptyState = document.getElementById("waterfallEmpty");
-	const summary = document.getElementById("waterfallSummary");
-	const legend = document.getElementById("waterfallLegend");
-	const completedRequests = requestList.filter(function(request) {
-		return request.timeStampStart && request.timeStampEnd;
-	}).sort(function(a, b) {
-		return a.timeStampStart - b.timeStampStart;
-	}).slice(0, 16);
-
-	if (!completedRequests.length) {
-		chart.innerHTML = "";
-		emptyState.classList.remove("is-hidden");
-		summary.innerHTML = "";
-		legend.innerHTML = "";
-		return;
-	}
-
-	emptyState.classList.add("is-hidden");
-
-	const width = 760;
-	const rowHeight = 14;
-	const rowGap = 8;
-	const topPadding = 30;
-	const leftPadding = 94;
-	const rightPadding = 22;
-	const bottomPadding = 18;
-	const timelineWidth = width - leftPadding - rightPadding;
-	const earliestStart = completedRequests[0].timeStampStart;
-	const latestEnd = completedRequests.reduce(function(max, request) {
-		return Math.max(max, request.timeStampEnd);
-	}, earliestStart);
-	const totalDuration = Math.max(1, latestEnd - earliestStart);
-	const height = topPadding + bottomPadding + (completedRequests.length * (rowHeight + rowGap));
-	const slowestRequest = completedRequests.reduce(function(slowest, request) {
-		return calculateDuration(request) > calculateDuration(slowest) ? request : slowest;
-	}, completedRequests[0]);
-	const mainDocumentRequest = completedRequests.find(function(request) {
-		return request.type === "main_frame";
-	}) || null;
-
-	chart.setAttribute("viewBox", "0 0 " + width + " " + height);
-
-	summary.innerHTML = [
-		'<div class="waterfall-chip">Span: ' + escapeHtml(String(Math.round(totalDuration))) + 'ms</div>',
-		'<div class="waterfall-chip is-hot">Slowest: ' + escapeHtml(compactUrl(slowestRequest.url || "")) + " " + escapeHtml(String(calculateDuration(slowestRequest))) + 'ms</div>',
-		'<div class="waterfall-chip">Avg TTFB: ' + escapeHtml(String(averageMetric(completedRequests, calculateTimeToFirstByte))) + 'ms</div>',
-		mainDocumentRequest
-			? '<div class="waterfall-chip">Document: ' + escapeHtml(String(Math.round(mainDocumentRequest.timeStampStart - earliestStart))) + "ms start</div>"
-			: ""
-	].join("");
-
-	legend.innerHTML = [
-		legendChip("Document", colorForRequestType("main_frame")),
-		legendChip("Script", colorForRequestType("script")),
-		legendChip("Stylesheet", colorForRequestType("stylesheet")),
-		legendChip("XHR", colorForRequestType("xmlhttprequest")),
-		legendChip("Image", colorForRequestType("image")),
-		legendChip("Wait / TTFB overlay", "#a6adc8", true)
-	].join("");
-
-	const axis = buildWaterfallAxis(leftPadding, topPadding, timelineWidth, totalDuration, height, mainDocumentRequest ? mainDocumentRequest.timeStampStart - earliestStart : null);
-	const rows = completedRequests.map(function(request, index) {
-		const y = topPadding + (index * (rowHeight + rowGap));
-		const startOffset = request.timeStampStart - earliestStart;
-		const duration = Math.max(2, request.timeStampEnd - request.timeStampStart);
-		const x = leftPadding + ((startOffset / totalDuration) * timelineWidth);
-		const barWidth = Math.max(2, (duration / totalDuration) * timelineWidth);
-		const firstByteDuration = Math.max(0, calculateTimeToFirstByte(request));
-		const downloadDuration = Math.max(0, calculateDownloadTime(request));
-		const firstByteWidth = Math.min(barWidth, Math.max(0, (firstByteDuration / totalDuration) * timelineWidth));
-		const firstByteMarkerX = x + firstByteWidth;
-		const label = compactUrl(request.url || "");
-		const color = colorForRequestType(request.type);
-		const tooltip = [
-			request.method || "",
-			request.url || "",
-			"Type: " + (request.type || "other"),
-			"Start: " + Math.round(startOffset) + "ms",
-			"TTFB: " + Math.round(firstByteDuration) + "ms",
-			"Download: " + Math.round(downloadDuration) + "ms",
-			"Duration: " + Math.round(duration) + "ms",
-			request.statusCode ? "Status: " + request.statusCode : ""
-		].filter(Boolean).join(" | ");
-		const stroke = request.requestId === slowestRequest.requestId ? ' stroke="#cba6f7" stroke-width="1.5"' : "";
-
-		return [
-			'<text x="8" y="' + (y + 11) + '" font-size="10" fill="#a6adc8">' + escapeHtml(label) + "</text>",
-			'<rect data-request-id="' + escapeHtml(String(request.requestId || "")) + '" x="' + x + '" y="' + y + '" width="' + barWidth + '" height="' + rowHeight + '" rx="6" fill="' + color + '"' + stroke + '><title>' + escapeHtml(tooltip) + '</title></rect>',
-			(firstByteWidth > 0
-				? '<rect data-request-id="' + escapeHtml(String(request.requestId || "")) + '" x="' + x + '" y="' + y + '" width="' + firstByteWidth + '" height="' + rowHeight + '" rx="6" fill="#11111b" opacity="0.35"><title>' + escapeHtml(tooltip) + '</title></rect>'
-				: ""),
-			(firstByteWidth > 0 && firstByteWidth < barWidth
-				? '<line x1="' + firstByteMarkerX + '" y1="' + (y + 1) + '" x2="' + firstByteMarkerX + '" y2="' + (y + rowHeight - 1) + '" stroke="#cdd6f4" stroke-width="1.2"></line>'
-				: ""),
-			'<text x="' + Math.min(width - 34, x + barWidth + 6) + '" y="' + (y + 11) + '" font-size="10" fill="#a6adc8">' + escapeHtml(String(Math.round(duration)) + "ms") + "</text>"
-		].join("");
-	}).join("");
-
-	chart.innerHTML = axis + rows;
 }
 
 function renderDomainChart(requestList) {
@@ -392,26 +246,6 @@ function renderDomainChart(requestList) {
 			"</div>"
 		].join("");
 	}).join("");
-}
-
-function buildWaterfallAxis(leftPadding, topPadding, timelineWidth, totalDuration, chartHeight, documentOffset) {
-	const marks = 4;
-	const elements = [];
-
-	for (let index = 0; index <= marks; index += 1) {
-		const x = leftPadding + ((index / marks) * timelineWidth);
-		const time = Math.round((index / marks) * totalDuration);
-		elements.push('<line x1="' + x + '" y1="10" x2="' + x + '" y2="' + (topPadding - 4) + '" stroke="rgba(205,214,244,0.12)" stroke-width="1"></line>');
-		elements.push('<text x="' + x + '" y="9" text-anchor="middle" font-size="10" fill="#a6adc8">' + escapeHtml(String(time) + "ms") + "</text>");
-	}
-
-	if (documentOffset !== null) {
-		const markerX = leftPadding + ((documentOffset / totalDuration) * timelineWidth);
-		elements.push('<line x1="' + markerX + '" y1="' + (topPadding - 2) + '" x2="' + markerX + '" y2="' + (chartHeight - 8) + '" stroke="#89b4fa" stroke-dasharray="3 3" stroke-width="1.2"></line>');
-		elements.push('<text x="' + markerX + '" y="' + (topPadding - 8) + '" text-anchor="middle" font-size="10" fill="#89b4fa">document</text>');
-	}
-
-	return elements.join("");
 }
 
 function renderRewriteRules() {
@@ -784,55 +618,17 @@ function createMockRule() {
 	};
 }
 
-function statCard(label, value) {
-	return [
-		'<article class="stat-card">',
-		'<div class="stat-label">' + escapeHtml(label) + "</div>",
-		'<div class="stat-value">' + escapeHtml(value) + "</div>",
-		"</article>"
-	].join("");
-}
-
-/* These three return null (not 0) when the timestamps needed aren't
-   captured yet/at all — distinct from a genuine 0ms measurement, which is
-   common for Download in particular (a small response's whole body often
-   arrives in the same read as its headers). Callers that do arithmetic on
-   the result (sums, comparisons, Math.max) are unaffected: null coerces to
-   0 in numeric context. Callers that DISPLAY the result must check
-   `!== null` rather than truthiness — see formatMs() below — since a
-   truthy check would hide a real "0ms" the same way this whole comment
-   exists to stop happening again. */
+/* groupRequestsByDomain always calls this after already checking both
+   timestamps are present, so the null path below is defensive rather than
+   reachable today — kept anyway since "no data yet" and "genuinely 0ms"
+   are meaningfully different and a future caller shouldn't have to
+   rediscover that distinction. */
 function calculateDuration(request) {
 	if (!request.timeStampStart || !request.timeStampEnd) {
 		return null;
 	}
 
 	return Math.max(0, Math.round(request.timeStampEnd - request.timeStampStart));
-}
-
-function calculateTimeToFirstByte(request) {
-	if (!request.timeStampStart || !request.timeStampFirstByte) {
-		return null;
-	}
-
-	return Math.max(0, Math.round(request.timeStampFirstByte - request.timeStampStart));
-}
-
-function calculateDownloadTime(request) {
-	if (!request.timeStampFirstByte || !request.timeStampEnd) {
-		return null;
-	}
-
-	return Math.max(0, Math.round(request.timeStampEnd - request.timeStampFirstByte));
-}
-
-function compactUrl(url) {
-	try {
-		const parsed = new URL(url);
-		return parsed.hostname.replace(/^www\./, "").slice(0, 24);
-	} catch (error) {
-		return String(url).slice(0, 24);
-	}
 }
 
 function groupRequestsByDomain(requestList) {
@@ -869,39 +665,6 @@ function extractDomain(url) {
 	} catch (error) {
 		return "Unknown";
 	}
-}
-
-function colorForRequestType(type) {
-	switch (type) {
-		case "main_frame":
-			return "#89b4fa";
-		case "script":
-			return "#cba6f7";
-		case "stylesheet":
-			return "#a6e3a1";
-		case "xmlhttprequest":
-			return "#f9e2af";
-		case "image":
-			return "#fab387";
-		default:
-			return "#6c7086";
-	}
-}
-
-function legendChip(label, color, isSoft) {
-	return '<div class="waterfall-chip"><span class="waterfall-swatch ' + (isSoft ? "is-soft" : "") + '" style="background:' + escapeHtml(color) + '"></span>' + escapeHtml(label) + "</div>";
-}
-
-function averageMetric(requests, getter) {
-	if (!requests.length) {
-		return 0;
-	}
-
-	const sum = requests.reduce(function(total, request) {
-		return total + getter(request);
-	}, 0);
-
-	return Math.round(sum / requests.length);
 }
 
 function domainColor(index) {
@@ -948,48 +711,6 @@ function escapeHtml(value) {
 		.replaceAll('"', "&quot;");
 }
 
-function handleProfileTableHover(event) {
-	if (!(runtimeState && runtimeState.profile && runtimeState.profile.requests)) {
-		return;
-	}
-
-	const row = event.target.closest("tr[data-request-id]");
-	if (!row) {
-		hideHoverPanel();
-		return;
-	}
-
-	const requestId = row.dataset.requestId;
-	const request = runtimeState.profile.requests[requestId];
-	if (!request) {
-		hideHoverPanel();
-		return;
-	}
-
-	hoverState.activeRequestId = requestId;
-	showHoverPanel(event, request);
-}
-
-function handleWaterfallHover(event) {
-	if (!(runtimeState && runtimeState.profile && runtimeState.profile.requests)) {
-		return;
-	}
-
-	const bar = event.target.closest("[data-request-id]");
-	if (!bar) {
-		return;
-	}
-
-	const requestId = bar.getAttribute("data-request-id");
-	const request = runtimeState.profile.requests[requestId];
-	if (!request) {
-		return;
-	}
-
-	hoverState.activeRequestId = requestId;
-	showHoverPanel(event, request);
-}
-
 function handleDomainChartHover(event) {
 	const slice = event.target.closest("path[data-domain]");
 	if (!slice) {
@@ -1016,24 +737,8 @@ function handleDomainChartHover(event) {
 	positionHoverPanel(event, panel);
 }
 
-function showHoverPanel(event, request) {
-	const panel = document.getElementById("profileHoverPanel");
-	const title = document.getElementById("profileHoverTitle");
-	const grid = document.getElementById("profileHoverGrid");
-
-	title.textContent = buildHoverTitle(request);
-	grid.innerHTML = renderHoverMetrics(buildHoverMetrics(request))
-		+ '<div class="hover-panel-meta">' + escapeHtml(buildHoverMeta(request)) + "</div>"
-		+ renderHoverUrl(request && request.url ? String(request.url) : "");
-
-	panel.classList.remove("is-hidden");
-	positionHoverPanel(event, panel);
-}
-
-/* Shared by request-row and domain-chart hover paths — a plain N-column
-   grid of small labeled stat boxes. Kept separate from the URL/meta
-   markup below since domain-chart hover (handleDomainChartHover) only
-   ever needs this part. */
+/* A plain N-column grid of small labeled stat boxes, used by domain-chart
+   hover (handleDomainChartHover above). */
 function renderHoverMetrics(items) {
 	return '<div class="hover-panel-metrics" style="grid-template-columns: repeat(' + items.length + ', 1fr);">' +
 		items.map(function(item) {
@@ -1045,24 +750,6 @@ function renderHoverMetrics(items) {
 			].join("");
 		}).join("") +
 		"</div>";
-}
-
-/* A URL can run to hundreds of characters (query strings, tokens) — letting
-   it wrap freely, like the rest of this panel's values used to, is what
-   made the panel balloon past the popup's own height on real traffic.
-   -webkit-line-clamp caps it to a predictable 2 lines regardless of length;
-   .hover-panel itself also gets a hard max-height + overflow-y as a second,
-   unconditional safety net (see popup.css). */
-function renderHoverUrl(url) {
-	if (!url) {
-		return "";
-	}
-	return [
-		'<div class="hover-panel-url-block">',
-		'<span class="hover-panel-label">URL</span>',
-		'<div class="hover-panel-url">' + escapeHtml(url) + "</div>",
-		"</div>"
-	].join("");
 }
 
 function positionHoverPanel(event, panel) {
@@ -1078,61 +765,12 @@ function positionHoverPanel(event, panel) {
 }
 
 function hideHoverPanel() {
-	hoverState.activeRequestId = null;
 	const panel = document.getElementById("profileHoverPanel");
 	if (!panel) {
 		return;
 	}
 
 	panel.classList.add("is-hidden");
-}
-
-function buildHoverTitle(request) {
-	const url = request && request.url ? String(request.url) : "";
-	try {
-		const parsed = new URL(url);
-		return parsed.hostname.replace(/^www\./, "") + " • " + (request.method || "").toUpperCase();
-	} catch (error) {
-		return (request.method || "").toUpperCase() + (url ? " • " + url : "");
-	}
-}
-
-/* The 4 numbers worth a glance at a hover — status/timing breakdown. */
-function buildHoverMetrics(request) {
-	const duration = calculateDuration(request);
-	const ttfb = calculateTimeToFirstByte(request);
-	const download = calculateDownloadTime(request);
-
-	return [
-		{ label: "Status", value: request && request.statusCode ? String(request.statusCode) : "—" },
-		{ label: "Duration", value: formatMs(duration) },
-		{ label: "TTFB", value: formatMs(ttfb) },
-		{ label: "Download", value: formatMs(download) }
-	];
-}
-
-/* null means "not captured" → "—"; any number (0 included — see the
-   comment on calculateDuration/TimeToFirstByte/DownloadTime above) is a
-   real measurement and must display as such, not get swallowed by a
-   truthiness check. */
-function formatMs(value) {
-	return value === null || value === undefined ? "—" : String(value) + "ms";
-}
-
-/* Everything else (type, blocking reason, tab/request IDs, start time) is
-   secondary lookup info rather than at-a-glance profiling data — folded
-   into one compact line instead of 5 more grid boxes, which is what used
-   to push this panel's height well past the popup's own 600px. */
-function buildHoverMeta(request) {
-	const startedAt = request && request.timeStampStart ? new Date(request.timeStampStart).toLocaleTimeString() : null;
-	const tabId = request && typeof request.tabId === "number" ? "Tab " + request.tabId : null;
-
-	return [
-		request && request.type ? String(request.type) : null,
-		request && request.blocking ? "Blocking: " + request.blocking : null,
-		tabId,
-		startedAt
-	].filter(Boolean).join("  ·  ") || "—";
 }
 
 function clamp(value, min, max) {

@@ -554,34 +554,6 @@ textarea {
 	border-color: rgba(var(--danger-rgb), 0.45);
 }
 
-.stats-grid {
-	display: grid;
-	grid-template-columns: repeat(2, minmax(0, 1fr));
-	gap: 12px;
-	margin-bottom: 14px;
-}
-
-.stat-card {
-	padding: 14px;
-	border-radius: var(--radius);
-	background: var(--panel-strong);
-	border: 1px solid var(--line);
-	border-top: 2px solid var(--accent);
-}
-
-.stat-label {
-	font-size: 13px;
-	text-transform: uppercase;
-	letter-spacing: 0.08em;
-	color: var(--muted);
-}
-
-.stat-value {
-	margin-top: 8px;
-	font-size: 28px;
-	font-weight: 700;
-}
-
 .debug-grid {
 	display: grid;
 	grid-template-columns: 1fr;
@@ -631,88 +603,6 @@ textarea {
 .issue-pill.is-warning {
 	background: rgba(var(--warning-rgb), 0.12);
 	color: var(--warning);
-}
-
-.waterfall-card {
-	margin-bottom: 14px;
-	padding: 16px;
-	border-radius: var(--radius);
-	background: var(--panel-strong);
-	border: 1px solid var(--line);
-}
-
-.waterfall-head h3 {
-	margin: 0;
-	font-size: 15px;
-	text-transform: uppercase;
-	letter-spacing: 0.06em;
-	color: var(--muted);
-}
-
-.waterfall-head p {
-	margin: 8px 0 0;
-	font-size: 13px;
-	line-height: 1.4;
-	color: var(--muted);
-}
-
-.waterfall-summary,
-.waterfall-legend {
-	display: flex;
-	flex-wrap: wrap;
-	gap: 8px;
-	margin-top: 12px;
-}
-
-.waterfall-chip {
-	display: inline-flex;
-	align-items: center;
-	gap: 8px;
-	padding: 6px 10px;
-	border-radius: 999px;
-	background: rgba(var(--accent-2-rgb), 0.08);
-	font-size: 12px;
-	color: var(--ink);
-}
-
-.waterfall-chip.is-hot {
-	background: rgba(var(--accent-rgb), 0.12);
-	color: var(--accent);
-}
-
-.waterfall-swatch {
-	width: 10px;
-	height: 10px;
-	border-radius: 999px;
-	flex: 0 0 auto;
-}
-
-.waterfall-swatch.is-soft {
-	opacity: 0.45;
-}
-
-.waterfall-wrap {
-	margin-top: 12px;
-	border-radius: 14px;
-	border: 1px solid var(--line);
-	background: var(--input-bg);
-	overflow: hidden;
-}
-
-.waterfall-empty {
-	padding: 14px;
-	font-size: 13px;
-	color: var(--muted);
-}
-
-.waterfall-empty.is-hidden {
-	display: none;
-}
-
-.waterfall-chart {
-	display: block;
-	width: 100%;
-	height: 260px;
 }
 
 .domain-card {
@@ -807,19 +697,8 @@ textarea {
 	text-align: right;
 }
 
-.profile-table-wrap {
-	max-height: 260px;
-	overflow: auto;
-	border: 1px solid var(--line);
-	border-radius: var(--radius);
-	background: var(--panel-strong);
-}
-
-/* Hard cap on both axes: width so it never crowds the popup's own 780px,
-   max-height + overflow-y so no amount of content (a long URL, a busy
-   meta line) can ever push the panel past the popup's own viewport — the
-   two hover-panel-* rules further down (metrics grid + 2-line URL clamp)
-   are what keep it *usually* far short of that cap, this is the backstop. */
+/* max-height + overflow-y is a hard backstop so this can never exceed the
+   popup's own viewport, whatever ends up inside it. */
 .hover-panel {
 	position: fixed;
 	z-index: 50;
@@ -850,8 +729,8 @@ textarea {
 }
 
 /* grid-template-columns is set inline per call (renderHoverMetrics in
-   popup.js) so a 3-item domain-hover and a 4-item request-hover each get
-   evenly-sized columns instead of ragged leftover space. */
+   popup.js) so the column count always matches the item count, keeping
+   columns evenly sized instead of leaving ragged leftover space. */
 .hover-panel-metrics {
 	display: grid;
 	gap: 6px;
@@ -880,75 +759,6 @@ textarea {
 	font-weight: 700;
 	font-size: 13px;
 	color: var(--ink);
-}
-
-/* Type, blocking reason, tab id, start time — secondary lookup info folded
-   into one line instead of more grid boxes (see buildHoverMeta in popup.js). */
-.hover-panel-meta {
-	font-size: 11px;
-	color: var(--muted);
-	padding-bottom: 8px;
-	margin-bottom: 8px;
-	border-bottom: 1px solid var(--line);
-}
-
-.hover-panel-url-block .hover-panel-label {
-	margin-bottom: 2px;
-}
-
-/* The fix for "the panel is too big": a URL of any length is clamped to a
-   predictable 2 lines instead of wrapping without limit — see the comment
-   on renderHoverUrl() in popup.js. */
-.hover-panel-url {
-	display: -webkit-box;
-	-webkit-line-clamp: 2;
-	-webkit-box-orient: vertical;
-	overflow: hidden;
-	word-break: break-all;
-	font-family: 'JetBrains Mono', 'SFMono-Regular', Consolas, monospace;
-	font-size: 11px;
-	line-height: 1.4;
-	color: var(--muted);
-}
-
-.profile-table {
-	width: 100%;
-	table-layout: fixed;
-	border-collapse: collapse;
-}
-
-.profile-table th,
-.profile-table td {
-	padding: 10px 12px;
-	border-bottom: 1px solid var(--line);
-	text-align: left;
-	vertical-align: top;
-	font-size: 13px;
-}
-
-/* Fixed widths on every column but URL, which take the rest of the table's
-   width — needed for table-layout:fixed (required by url-cell's ellipsis
-   truncation below) to divide space sensibly instead of splitting it
-   evenly across all 5 columns regardless of content. */
-.profile-table th:nth-child(1), .profile-table td:nth-child(1) { width: 64px; }
-.profile-table th:nth-child(2), .profile-table td:nth-child(2) { width: 56px; }
-.profile-table th:nth-child(3), .profile-table td:nth-child(3) { width: 84px; }
-.profile-table th:nth-child(4), .profile-table td:nth-child(4) { width: 76px; }
-
-.profile-table tbody tr:hover td {
-	background: var(--panel-strong);
-}
-
-/* The other fix for "rows are too big": a URL of any length now stays on
-   one line, ellipsized — the full string is still available via this
-   cell's own title attribute (a native tooltip), and via the row's hover
-   panel (see hover-panel-url above). */
-.url-cell {
-	overflow: hidden;
-	white-space: nowrap;
-	text-overflow: ellipsis;
-	font-size: 12px;
-	font-family: 'JetBrains Mono', 'SFMono-Regular', Consolas, monospace;
 }
 
 .rule-list {

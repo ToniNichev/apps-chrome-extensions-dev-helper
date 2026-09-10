@@ -24,14 +24,13 @@
 				<div class="section-head">
 					<div>
 						<h2>Network Profiling</h2>
-						<p>Capture request timings from the service worker and keep a running snapshot inside the popup.</p>
+						<p>Track which domains consume the most cumulative request time.</p>
 					</div>
 					<div class="button-row">
 						<button type="button" class="secondary-button" id="clearProfileButton">Clear</button>
 						<button type="button" class="primary-button" id="toggleProfilingButton">Start Profiling</button>
 					</div>
 				</div>
-				<div class="stats-grid" id="profileStats"></div>
 				<div class="debug-grid">
 					<div class="debug-card">
 						<h3>Runtime Health</h3>
@@ -40,18 +39,6 @@
 					<div class="debug-card">
 						<h3>Validation</h3>
 						<div id="validationSummary"></div>
-					</div>
-				</div>
-				<div class="waterfall-card">
-					<div class="waterfall-head">
-						<h3>Waterfall View</h3>
-						<p>Each row shows total request duration, with the wait-to-first-byte portion shaded on top.</p>
-					</div>
-					<div class="waterfall-summary" id="waterfallSummary"></div>
-					<div class="waterfall-legend" id="waterfallLegend"></div>
-					<div class="waterfall-wrap" id="waterfallWrap">
-						<div class="waterfall-empty" id="waterfallEmpty">Start profiling and load a page to see the request timeline.</div>
-						<svg id="waterfallChart" class="waterfall-chart" viewBox="0 0 760 220" preserveAspectRatio="none"></svg>
 					</div>
 				</div>
 				<div class="domain-card">
@@ -67,21 +54,7 @@
 						<div class="domain-list" id="domainList"></div>
 					</div>
 				</div>
-				<div class="profile-table-wrap">
-					<table class="profile-table">
-						<thead>
-							<tr>
-								<th>Method</th>
-								<th>Status</th>
-								<th>Type</th>
-								<th>Duration</th>
-								<th>URL</th>
-							</tr>
-						</thead>
-						<tbody id="profileTableBody"></tbody>
-					</table>
-				</div>
-				<div class="hover-panel is-hidden" id="profileHoverPanel" role="dialog" aria-label="Request details">
+				<div class="hover-panel is-hidden" id="profileHoverPanel" role="dialog" aria-label="Domain details">
 					<div class="hover-panel-title" id="profileHoverTitle"></div>
 					<div class="hover-panel-grid" id="profileHoverGrid"></div>
 				</div>
