@@ -1,6 +1,6 @@
 # Privacy Policy — SwissDev.tools Dev Helper
 
-_Last updated: 2026-09-04_
+_Last updated: 2026-09-12_
 
 SwissDev.tools Dev Helper is a developer tool for profiling network requests, and configuring proxy, rewrite, mock, and script-injection rules while you browse. This policy explains what the extension does and does not do with your data.
 
@@ -25,6 +25,7 @@ Profiling data (request URLs, methods, status codes, and timings) is held in mem
 | `declarativeNetRequest` | Apply the URL-rewrite and header-override rules you define, using Chrome's built-in rule engine (no request bodies are read or altered by the extension itself). |
 | `proxy` | Apply the proxy configuration you define in the Proxy Rules tab. |
 | `tabs` | Identify which tab a rule applies to, and deliver script/mock rules to the right page. |
+| `notifications` | Show a desktop notification when a Watchdog rule you defined matches a completed request, so you don't have to keep the Network tab open. |
 | `host_permissions: <all_urls>` | SwissDev.tools Dev Helper's whole purpose is letting you apply rules to any site you choose to debug — this permission lets your rules run on whichever site you point them at, rather than a fixed list. |
 
 ## Proxy rules and third-party servers
