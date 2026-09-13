@@ -64,7 +64,7 @@ Paste one of these into the corresponding field in the dashboard's Permissions t
 
 ## Assets still needed before submission
 
-- [x] Screenshot, 1280×800, no alpha channel: `store-assets/screenshot-mock-rules.jpg`. Rendered headlessly from the real `popup.html`/`popup.css` (accurate UI), but with hand-written sample rule data rather than a live capture — swap for a real capture once you've clicked through the extension yourself, or add more (e.g. Profiling tab with live data) alongside it.
+- [x] Screenshot, 1280×800, 24-bit PNG (no alpha): `store-assets/screenshot-mock-rules.png`. Rendered from the real, currently-shipping `popup.html`/`popup.css`/`popup.js` (a `chrome.*` shim feeds it sample Mock Rules data — see the render pipeline for how) — replaces an earlier version made before several restyle commits, which had drifted out of sync with the actual UI. Still not a live capture, so swap for one once you've clicked through the extension yourself, or add more (e.g. Profiling tab with live data) alongside it.
 - [ ] Optional small promo tile (440×280) and marquee (1400×560) if you want better placement.
 - [ ] A Chrome Web Store developer account ($5 one-time registration fee if not already registered) — requires payment details, so this has to be done by you directly.
 - [ ] Fill out the Developer Dashboard fields using the text above — requires your Google account login, so this also has to be done by you directly.
