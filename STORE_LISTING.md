@@ -45,8 +45,8 @@ Paste one of these into the corresponding field in the dashboard's Permissions t
 
 ## Listing description drafts
 
-**Short description** (132 char max):
-> Rewrite, proxy, and mock network requests, watch for matching ones, and see per-domain request time — plus a CORS-bypass relay for swissdev.tools.
+**Short description** (132 char max — the original draft here was 146 and would have failed the same way the manifest description did; verify length before pasting anything into a Dashboard field with a hard cap):
+> Rewrite, proxy, and mock requests, watch for matches, and profile per-domain time — plus a CORS-bypass relay for swissdev.tools.
 
 **Detailed description** (draft — expand as needed):
 > SwissDev.tools Dev Helper is a network debugging toolkit for developers. It lets you:
