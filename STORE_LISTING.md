@@ -40,7 +40,7 @@ Paste one of these into the corresponding field in the dashboard's Permissions t
 
 - Does the extension collect user data? **No.**
 - All categories (personally identifiable info, health info, financial info, authentication info, personal communications, location, web history, user activity, website content) — mark **not collected**.
-- Privacy policy URL: link to `PRIVACY.md` in the repo (GitHub renders it as a readable page, e.g. `https://github.com/ToniNichev/apps-chrome-extensions-dev-helper/blob/master/PRIVACY.md`) — that URL satisfies the dashboard's requirement without needing separate hosting.
+- Privacy policy URL: `https://swissdev.tools/privacy/` — a real page on the extension's own associated site, styled to match it. `PRIVACY.md` in this repo keeps a copy for developers browsing the source and now points back at that page as canonical.
 - Certify: "I do not sell or transfer user data to third parties" and "I do not use or transfer user data for purposes unrelated to the item's single purpose" — both true here.
 
 ## Listing description drafts

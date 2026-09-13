@@ -1,5 +1,7 @@
 # Privacy Policy — SwissDev.tools Dev Helper
 
+> **Canonical version:** https://swissdev.tools/privacy/ — this file is kept for developers browsing the source, but the hosted page is the one linked from the Chrome Web Store listing and is authoritative if the two ever drift.
+
 _Last updated: 2026-09-12_
 
 SwissDev.tools Dev Helper is a developer tool for profiling network requests, and configuring proxy, rewrite, mock, and script-injection rules while you browse. This policy explains what the extension does and does not do with your data.
