@@ -23,7 +23,7 @@ A Manifest V3 Chrome extension for profiling network requests and defining rewri
 
 ## Packaging & Chrome Web Store submission
 
-- `scripts/build-store-zip.sh` builds `dist/swissdev-tools-dev-helper-v<version>.zip`, containing only the files the manifest references (`manifest.json`, `icons/`, `app/`) — the legacy reference files below are intentionally left out.
+- `scripts/build-store-zip.sh` builds the **manual-install** zip served from swissdev.tools/extension/ — its manifest keeps the `key` field (see the script's own header comment for why). `scripts/build-cws-submission-zip.sh` builds the file to actually upload to the Chrome Web Store Developer Dashboard, with that field stripped — **the Store rejects a manifest that has it.** See `STORE_LISTING.md`'s "Packaging" section for the full story.
 - `STORE_LISTING.md` has the single-purpose statement, per-permission justifications, and data-disclosure answers for the Developer Dashboard.
 - `PRIVACY.md` is the extension's privacy policy.
 

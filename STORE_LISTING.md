@@ -72,4 +72,9 @@ Paste one of these into the corresponding field in the dashboard's Permissions t
 
 ## Packaging
 
-Run `scripts/build-store-zip.sh` from the repo root — it zips only `manifest.json`, `icons/`, and `app/` (the files the MV3 manifest actually references) into `dist/swissdev-tools-dev-helper-v<version>.zip`, leaving the legacy MV2 reference files (`assets/`, `markups/`, `background.html`) out of the upload.
+Two different zips, for two different destinations — do not swap them:
+
+- `scripts/build-store-zip.sh` builds `dist/swissdev-tools-dev-helper-v<version>.zip`, the **manual-install** file linked from swissdev.tools/extension/. Its manifest keeps the `key` field, which is what pins every "Load unpacked" install to the same fixed extension id (`mfdphgpfndgjojkpmmppglgkfmiilgbh`) — `assets/dev-helper-relay.js` on swissdev.tools hardcodes that id, and needs every manual-install user to land on it, not just whoever built the zip.
+- `scripts/build-cws-submission-zip.sh` builds `dist/swissdev-tools-dev-helper-v<version>-cws-submission.zip` — **this is the one to upload to the Chrome Web Store Developer Dashboard.** The Store rejects any manifest containing a `key` field outright ("key field is not allowed in manifest"), so this script copies `manifest.json`, strips just that field with `jq`, and zips the result; everything else is identical to the manual-install zip.
+
+Once the Store listing is live, `dev-helper-relay.js`'s `EXTENSION_ID` should move to whatever id the Store assigns at publish, and the manual-install flow (and the `key` field itself) can retire.
