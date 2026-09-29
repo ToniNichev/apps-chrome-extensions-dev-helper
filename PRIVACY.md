@@ -2,7 +2,7 @@
 
 > **Canonical version:** https://swissdev.tools/privacy/ — this file is kept for developers browsing the source, but the hosted page is the one linked from the Chrome Web Store listing and is authoritative if the two ever drift.
 
-_Last updated: 2026-09-12_
+_Last updated: 2026-09-29_
 
 SwissDev.tools Dev Helper is a developer tool for profiling network requests, and configuring proxy, rewrite, mock, and script-injection rules while you browse. This policy explains what the extension does and does not do with your data.
 
@@ -23,7 +23,7 @@ Profiling data (request URLs, methods, status codes, and timings) is held in mem
 | Permission | What it's for |
 |---|---|
 | `storage` | Save your rules and settings locally via `chrome.storage.local`, as described above. |
-| `webRequest` | Read request metadata (URL, method, timing, status) to power the Profiling tab. Used read-only; SwissDev.tools Dev Helper does not use `webRequest` to block or modify traffic. |
+| `webRequest` | Read request metadata (URL, method, timing, status) to power the Profiling tab, and the `Set-Cookie` header of responses to requests you send through the swissdev.tools relay (see below). Used read-only; SwissDev.tools Dev Helper does not use `webRequest` to block or modify traffic. |
 | `declarativeNetRequest` | Apply the URL-rewrite and header-override rules you define, using Chrome's built-in rule engine (no request bodies are read or altered by the extension itself). |
 | `proxy` | Apply the proxy configuration you define in the Proxy Rules tab. |
 | `tabs` | Identify which tab a rule applies to, and deliver script/mock rules to the right page. |
@@ -36,7 +36,7 @@ If you configure a proxy rule, SwissDev.tools Dev Helper routes matching traffic
 
 ## The swissdev.tools relay
 
-swissdev.tools (`https://swissdev.tools/*`, and no other site) can ask the extension to make a network request on its behalf, and to be told which theme it's currently displaying so the extension's own popup can match it. This exists so swissdev.tools's own browser-based tools can reach `localhost` and other CORS-restricted servers you're developing against — the request is made directly from the extension to the URL swissdev.tools provides, with no third-party server in between, and the response is returned straight back to the page. Nothing about this exchange is logged, stored, or sent anywhere else.
+swissdev.tools (`https://swissdev.tools/*`, and no other site) can ask the extension to make a network request on its behalf, and to be told which theme it's currently displaying so the extension's own popup can match it. This exists so swissdev.tools's own browser-based tools can reach `localhost` and other CORS-restricted servers you're developing against — the request is made directly from the extension to the URL swissdev.tools provides, with no third-party server in between, and the response is returned straight back to the page. That includes the response's `Set-Cookie` headers, which browsers hide from ordinary requests — the extension reads them via `webRequest` only for requests made through this relay, so the page can show you the full response. Nothing about this exchange is logged, stored, or sent anywhere else.
 
 ## Mock rules
 

@@ -1,7 +1,7 @@
 {
   "name": "SwissDev.tools Dev Helper",
   "description": "Network profiling, rewrite/proxy/mock/CSS rules, and watchdog alerts for any site — plus a CORS-bypass relay for swissdev.tools.",
-  "version": "3.1.0",
+  "version": "3.2.0",
   "manifest_version": 3,
   "minimum_chrome_version": "116",
   "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAvMSfd7D57RUBbpqeSoCWl9i/UAavW4aSx7omnpDSwhjd/rKCEjYrEZ3OyW3GaiNum8N7jScP86vIRt2u9afElysdJo9SjI4lKz4pqMsC38L37evQxOi7fpbOEenuwm0HITTlvxbAf5/WIAcG75R8qVAvJmFPjmlx582T6k0QB7+aPCdvHnG1lGkEcXYMS4oNsm2/QAdb1zhse9XTKHZKkaYkUwb9PHTPKtaMtx5EvZn4el1Mo6uD6Vh/xd2VMCoHyzHVJHBEsrvGWOyPhktwwxN4QZT063zk3eX1sz6eqpvdHlf2Qx1KwjjrLIPbnhMpIBiex9RB7FnbB+qfb0dTwwIDAQAB",

@@ -48,6 +48,16 @@ const NORMAL_ICON = { "16": "icons/icon16.png", "32": "icons/icon32.png", "48": 
 const ACTIVE_ICON = { "16": "icons/icon-active-16.png", "32": "icons/icon-active-32.png", "48": "icons/icon-active-48.png", "128": "icons/icon-active-128.png" };
 let activeProxyRequestCount = 0;
 
+/* Set-Cookie captured for relayed requests, keyed by webRequest requestId
+   -> { method, url, values, at }. fetch() strips Set-Cookie from response.headers in every
+   context, extension service workers included (it's a "forbidden response
+   header name"), so swissdev.tools's HTTP tool could never show it — while
+   Postman, not being a browser, does. webRequest with "extraHeaders" is the
+   one place Chrome still exposes it; see the onHeadersReceived listener
+   below and takeRelaySetCookies(). */
+const relaySetCookies = new Map();
+const RELAY_SET_COOKIE_TTL_MS = 60000;
+
 bootstrap();
 
 chrome.runtime.onInstalled.addListener(function() {
@@ -168,12 +178,16 @@ async function handleProxyFetch(message) {
 			body: body || undefined
 		});
 		const text = await response.text();
+		const responseHeaders = Array.from(response.headers.entries());
+		takeRelaySetCookies(method, response.url || url).forEach(function(value) {
+			responseHeaders.push(["set-cookie", value]);
+		});
 
 		return {
 			ok: true,
 			status: response.status,
 			statusText: response.statusText,
-			headers: Array.from(response.headers.entries()),
+			headers: responseHeaders,
 			body: text,
 			elapsedMs: Date.now() - t0
 		};
@@ -204,6 +218,54 @@ function endProxyActivity() {
 	if (activeProxyRequestCount === 0) {
 		chrome.action.setIcon({ path: NORMAL_ICON }, function() { void chrome.runtime.lastError; });
 	}
+}
+
+/* Only relayed fetches: tabId -1 (no tab — this service worker's own
+   requests) narrows the filter itself, so this never runs for page traffic;
+   the initiator check then excludes other extensions' background requests,
+   and activeProxyRequestCount excludes anything this worker fetches for its
+   own reasons. Only Set-Cookie is kept — every other header already comes
+   through fetch() itself. Keyed by requestId, which Chrome keeps the same
+   across redirect hops, so each hop overwrites the previous one and only
+   the final response's cookies remain. Recorded even when a hop has none:
+   keying by URL instead once let a redirect's first-hop cookies linger and
+   get attached to a later, cookie-less request to that same URL. */
+chrome.webRequest.onHeadersReceived.addListener(function(details) {
+	if (activeProxyRequestCount === 0 || details.initiator !== "chrome-extension://" + chrome.runtime.id) {
+		return;
+	}
+
+	const values = (details.responseHeaders || []).filter(function(h) {
+		return h.name.toLowerCase() === "set-cookie";
+	}).map(function(h) { return h.value || ""; });
+
+	// Orphans (e.g. a relay whose fetch() then failed) are never taken.
+	const now = Date.now();
+	relaySetCookies.forEach(function(entry, requestId) {
+		if (now - entry.at >= RELAY_SET_COOKIE_TTL_MS) relaySetCookies.delete(requestId);
+	});
+
+	relaySetCookies.set(details.requestId, { method: details.method, url: details.url, values: values, at: now });
+}, {
+	urls: ["<all_urls>"],
+	tabId: -1
+}, ["responseHeaders", "extraHeaders"]);
+
+/* fetch() doesn't expose its requestId, so this matches on method + final
+   URL, oldest first (Map keeps insertion order). Two concurrent relays of
+   the exact same request are indistinguishable here, but their Set-Cookie
+   lists are almost always identical anyway. */
+function takeRelaySetCookies(method, url) {
+	let found = null;
+	relaySetCookies.forEach(function(entry, requestId) {
+		if (!found && entry.method === method && entry.url === url) found = requestId;
+	});
+	if (found === null) {
+		return [];
+	}
+	const values = relaySetCookies.get(found).values;
+	relaySetCookies.delete(found);
+	return values;
 }
 
 chrome.webRequest.onBeforeRequest.addListener(function(details) {

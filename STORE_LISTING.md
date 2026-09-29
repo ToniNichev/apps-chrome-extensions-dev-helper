@@ -16,7 +16,7 @@ Paste one of these into the corresponding field in the dashboard's Permissions t
 > Used to save the user's rewrite/proxy/mock/script rules and settings locally via `chrome.storage.local`, so their configuration persists across browser sessions. Nothing is synced or transmitted off-device.
 
 **webRequest**
-> Used read-only to capture request timing, method, type, and status for the extension's network profiling feature. The extension does not use webRequest to block, redirect, or modify requests — that's handled separately via declarativeNetRequest.
+> Used read-only to capture request timing, method, type, and status for the extension's network profiling feature, and to read the Set-Cookie response header of requests the user sends through the swissdev.tools relay (fetch() hides that header, so it's the only way to show the user the full response they asked for). The extension does not use webRequest to block, redirect, or modify requests — that's handled separately via declarativeNetRequest.
 
 **declarativeNetRequest**
 > Used to apply the URL-rewrite and header-override rules the user defines, via Chrome's built-in declarative rule engine, so live traffic can be redirected or have headers modified for testing.
