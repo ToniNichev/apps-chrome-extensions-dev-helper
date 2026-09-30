@@ -24,7 +24,7 @@ Profiling data (request URLs, methods, status codes, and timings) is held in mem
 |---|---|
 | `storage` | Save your rules and settings locally via `chrome.storage.local`, as described above. |
 | `webRequest` | Read request metadata (URL, method, timing, status) to power the Profiling tab, and the `Set-Cookie` header of responses to requests you send through the swissdev.tools relay (see below). Used read-only; SwissDev.tools Dev Helper does not use `webRequest` to block or modify traffic. |
-| `declarativeNetRequest` | Apply the URL-rewrite and header-override rules you define, using Chrome's built-in rule engine (no request bodies are read or altered by the extension itself). |
+| `declarativeNetRequest` | Apply the URL-rewrite and header-override rules you define, using Chrome's built-in rule engine (no request bodies are read or altered by the extension itself). Also attaches a `Cookie` header you entered on swissdev.tools to that one relayed request, via a temporary rule removed as soon as the request completes. |
 | `proxy` | Apply the proxy configuration you define in the Proxy Rules tab. |
 | `tabs` | Identify which tab a rule applies to, and deliver script/mock rules to the right page. |
 | `notifications` | Show a desktop notification when a Watchdog rule you defined matches a completed request, so you don't have to keep the Network tab open. |

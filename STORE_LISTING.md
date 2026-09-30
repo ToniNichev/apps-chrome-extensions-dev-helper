@@ -19,7 +19,7 @@ Paste one of these into the corresponding field in the dashboard's Permissions t
 > Used read-only to capture request timing, method, type, and status for the extension's network profiling feature, and to read the Set-Cookie response header of requests the user sends through the swissdev.tools relay (fetch() hides that header, so it's the only way to show the user the full response they asked for). The extension does not use webRequest to block, redirect, or modify requests — that's handled separately via declarativeNetRequest.
 
 **declarativeNetRequest**
-> Used to apply the URL-rewrite and header-override rules the user defines, via Chrome's built-in declarative rule engine, so live traffic can be redirected or have headers modified for testing.
+> Used to apply the URL-rewrite and header-override rules the user defines, via Chrome's built-in declarative rule engine, so live traffic can be redirected or have headers modified for testing. Also used to attach a Cookie header the user entered to a request they send through the swissdev.tools relay (fetch() can't set that header itself), via a short-lived session rule scoped to that single request and removed as soon as it completes.
 
 **proxy**
 > Used to apply a PAC script compiled from the user's Proxy Rules, so requests matching a rule's URL pattern are routed through the proxy server they configured for that rule, while everything else continues direct.

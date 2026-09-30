@@ -39,7 +39,10 @@ let watchdogMatchCount = 0;
 const watchdogLastFiredAt = new Map(); // rule id -> timestamp, for the per-rule notification cooldown below
 const WATCHDOG_NOTIFY_COOLDOWN_MS = 5000;
 
-const EXTERNAL_API_VERSION = 1;
+/* 2 = relayed requests carry a Cookie header (see withRelayCookie()) and
+   return Set-Cookie. swissdev.tools reads this from DEV_HELPER_PING to
+   tell users whether the cookies they entered will actually be sent. */
+const EXTERNAL_API_VERSION = 2;
 const ALLOWED_EXTERNAL_ORIGINS = ["https://swissdev.tools"];
 const THEME_STORAGE_KEY = "sdtTheme";
 const ALLOWED_THEMES = ["dark", "terminal", "light", "nord", "gruvbox", "synthwave", "slate", "solarized-light", "github-light", "one-light"];
@@ -56,6 +59,13 @@ let activeProxyRequestCount = 0;
    one place Chrome still exposes it; see the onHeadersReceived listener
    below and takeRelaySetCookies(). */
 const relaySetCookies = new Map();
+
+/* Session-rule ids for withRelayCookie() — well above anything
+   buildDynamicRules() in dnr.js hands out, though session and dynamic rule
+   ids don't actually share a namespace; this just keeps them unambiguous
+   when reading getSessionRules() output while debugging. */
+const RELAY_COOKIE_RULE_BASE_ID = 900000;
+let relayCookieRuleSeq = 0;
 const RELAY_SET_COOKIE_TTL_MS = 60000;
 
 bootstrap();
@@ -166,16 +176,27 @@ async function handleProxyFetch(message) {
 	}
 
 	const method = String(message.method || "GET").toUpperCase();
-	const headers = message.headers && typeof message.headers === "object" ? message.headers : {};
+	const headers = Object.assign({}, message.headers && typeof message.headers === "object" ? message.headers : {});
 	const body = (method === "GET" || method === "HEAD") ? undefined : message.body;
+
+	// fetch() would silently drop it anyway (a forbidden request header).
+	let cookie = "";
+	Object.keys(headers).forEach(function(name) {
+		if (name.toLowerCase() === "cookie") {
+			cookie = cookie ? cookie + "; " + headers[name] : String(headers[name]);
+			delete headers[name];
+		}
+	});
 
 	beginProxyActivity();
 	try {
 		const t0 = Date.now();
-		const response = await fetch(url, {
-			method: method,
-			headers: headers,
-			body: body || undefined
+		const response = await withRelayCookie(url, method, cookie, function() {
+			return fetch(url, {
+				method: method,
+				headers: headers,
+				body: body || undefined
+			});
 		});
 		const text = await response.text();
 		const responseHeaders = Array.from(response.headers.entries());
@@ -193,6 +214,48 @@ async function handleProxyFetch(message) {
 		};
 	} finally {
 		endProxyActivity();
+	}
+}
+
+/* Cookie is a forbidden request header, so fetch() drops it without error —
+   but declarativeNetRequest can still set it at the network layer. A
+   session rule scoped to exactly this request (this extension as
+   initiator, no tab, this method and URL) is added just before the fetch
+   and removed right after, so it can't leak onto the user's own browsing
+   or onto a concurrent relay to a different URL. Two limits, both
+   acceptable for a dev tool: a redirect to a different URL doesn't carry
+   the cookie, and two in-flight relays to the exact same URL with
+   different cookies would both get the later one. */
+async function withRelayCookie(url, method, cookie, doFetch) {
+	if (!cookie) {
+		return doFetch();
+	}
+
+	const ruleId = RELAY_COOKIE_RULE_BASE_ID + (relayCookieRuleSeq = (relayCookieRuleSeq + 1) % 100000);
+	await chrome.declarativeNetRequest.updateSessionRules({
+		removeRuleIds: [ruleId],
+		addRules: [{
+			id: ruleId,
+			priority: 1000, // above any header-override rule the user defined (dnr.js uses 1)
+			action: {
+				type: "modifyHeaders",
+				requestHeaders: [{ header: "cookie", operation: "set", value: cookie }]
+			},
+			condition: {
+				// "|...|" anchors both ends; new URL() matches the canonical form Chrome compares against.
+				urlFilter: "|" + new URL(url).href + "|",
+				tabIds: [chrome.tabs.TAB_ID_NONE],
+				initiatorDomains: [chrome.runtime.id],
+				requestMethods: [method.toLowerCase()]
+			}
+		}]
+	});
+	try {
+		return await doFetch();
+	} finally {
+		chrome.declarativeNetRequest.updateSessionRules({ removeRuleIds: [ruleId] }).catch(function(error) {
+			console.error("Failed to remove relay cookie rule", error);
+		});
 	}
 }
 
