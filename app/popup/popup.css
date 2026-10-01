@@ -240,6 +240,52 @@
 	--shadow: 0 2px 12px rgba(0, 0, 0, 0.07);
 }
 
+/* High Contrast and Paper — swissdev.tools's light, high-contrast themes
+   (see its assets/shared.css for the contrast targets they're built to). */
+[data-theme="high-contrast"] {
+	--bg: #ffffff;
+	--panel: #f2f2f2;
+	--panel-strong: #f7f7f7;
+	--input-bg: #ffffff;
+	--ink: #000000;
+	--muted: #3d3d3d;
+	--accent: #0033b3;
+	--accent-rgb: 0, 51, 179;
+	--accent-2: #0033b3;
+	--accent-2-rgb: 0, 51, 179;
+	--line: #767676;
+	--line-hi: #333333;
+	--success: #00600f;
+	--success-rgb: 0, 96, 15;
+	--warning: #7a4d00;
+	--warning-rgb: 122, 77, 0;
+	--danger: #b30000;
+	--danger-rgb: 179, 0, 0;
+	--shadow: 0 2px 12px rgba(0, 0, 0, 0.12);
+}
+
+[data-theme="paper"] {
+	--bg: #fbfaf6;
+	--panel: #f1efe7;
+	--panel-strong: #f6f4ec;
+	--input-bg: #fffefb;
+	--ink: #121212;
+	--muted: #4a4843;
+	--accent: #00585c;
+	--accent-rgb: 0, 88, 92;
+	--accent-2: #00585c;
+	--accent-2-rgb: 0, 88, 92;
+	--line: #8c8a80;
+	--line-hi: #55534c;
+	--success: #2e6a10;
+	--success-rgb: 46, 106, 16;
+	--warning: #7a4f00;
+	--warning-rgb: 122, 79, 0;
+	--danger: #a51d1d;
+	--danger-rgb: 165, 29, 29;
+	--shadow: 0 2px 12px rgba(0, 0, 0, 0.12);
+}
+
 html,
 body {
 	width: 780px;
